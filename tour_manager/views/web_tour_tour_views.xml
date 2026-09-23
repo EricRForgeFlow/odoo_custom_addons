@@ -4,19 +4,31 @@
         <field name="name">web_tour.tour.view.kanban.tour_manager</field>
         <field name="model">web_tour.tour</field>
         <field name="arch" type="xml">
-            <kanban create="0" edit="0" group_create="0" group_edit="0" group_delete="0" records_draggable="0">
+            <kanban create="0" edit="0" can_open="0" group_create="0" group_edit="0" group_delete="0" records_draggable="0">
+                <field name="custom"/>
                 <field name="module_icon"/>
                 <field name="is_done"/>
                 <templates>
-                    <t t-name="card" class="flex-row align-items-center gap-3">
+                    <t t-name="card" t-attf-class="flex-row align-items-center gap-3 #{record.custom.raw_value ? 'bg-info-subtle' : ''}">
                         <img t-if="record.module_icon.raw_value" t-att-src="record.module_icon.raw_value"
                              class="o_image_64_contain" alt="App icon"/>
+                        <i t-elif="record.custom.raw_value" class="fa fa-map-signs fa-3x text-info" title="Custom tour"/>
                         <div class="flex-grow-1">
-                            <field name="module_name" class="fw-bold fs-5"/>
-                            <div class="text-muted"><field name="name"/></div>
+                            <t t-if="record.custom.raw_value">
+                                <field name="display_name" class="fw-bold fs-5"/>
+                                <div><span class="badge text-bg-info">Custom</span></div>
+                            </t>
+                            <t t-else="">
+                                <field name="module_name" class="fw-bold fs-5"/>
+                                <div class="text-muted"><field name="display_name"/></div>
+                            </t>
                             <span t-if="record.is_done.raw_value" class="badge text-bg-success">Done</span>
                         </div>
-                        <button name="action_start_tour" type="object" class="btn btn-primary">Start</button>
+                        <div class="d-flex flex-column gap-1">
+                            <button name="action_start_tour" type="object" class="btn btn-primary">Start</button>
+                            <button name="action_edit_tour" type="object" class="btn btn-secondary"
+                                    invisible="not custom" groups="base.group_system">Edit</button>
+                        </div>
                     </t>
                 </templates>
             </kanban>
@@ -27,13 +39,61 @@
         <field name="name">web_tour.tour.view.list.tour_manager</field>
         <field name="model">web_tour.tour</field>
         <field name="arch" type="xml">
-            <list create="0" edit="0" default_order="module_name, sequence, name">
+            <list create="0" edit="0" default_order="custom, module_name, sequence, name" decoration-info="custom">
+                <field name="custom" column_invisible="1"/>
                 <field name="module_name"/>
-                <field name="name"/>
+                <field name="display_name" string="Tour"/>
                 <field name="url" optional="hide"/>
                 <field name="is_done"/>
                 <button name="action_start_tour" type="object" string="Start" class="btn-link" icon="fa-play"/>
+                <button name="action_edit_tour" type="object" string="Edit" class="btn-link" icon="fa-pencil"
+                        invisible="not custom" groups="base.group_system"/>
             </list>
+        </field>
+    </record>
+
+    <record id="web_tour_tour_view_form" model="ir.ui.view">
+        <field name="name">web_tour.tour.view.form.tour_manager</field>
+        <field name="model">web_tour.tour</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <form create="0">
+                <header>
+                    <button name="action_start_tour" type="object" string="Start" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="title"/>
+                        <h1><field name="title" placeholder="e.g. Create your first quotation"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name" string="Technical Name"/>
+                            <field name="url"/>
+                        </group>
+                        <group>
+                            <field name="sequence"/>
+                            <field name="custom" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page name="steps" string="Steps">
+                            <field name="step_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="trigger"/>
+                                    <field name="run"/>
+                                    <field name="tooltip_position"/>
+                                    <field name="content"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page name="rainbow_man" string="Completion Message">
+                            <field name="rainbow_man_message" placeholder="Message shown when the tour is completed..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
         </field>
     </record>
 
@@ -42,10 +102,13 @@
         <field name="model">web_tour.tour</field>
         <field name="arch" type="xml">
             <search string="Tours">
-                <field name="name"/>
+                <field name="name" filter_domain="['|', ('title', 'ilike', self), ('name', 'ilike', self)]"/>
                 <field name="module_name"/>
+                <filter string="Onboarding" name="onboarding" domain="[('custom', '=', False)]"/>
+                <filter string="Custom" name="custom" domain="[('custom', '=', True)]"/>
                 <group>
                     <filter string="App" name="group_by_module_name" context="{'group_by': 'module_name'}"/>
+                    <filter string="Type" name="group_by_custom" context="{'group_by': 'custom'}"/>
                 </group>
             </search>
         </field>
@@ -55,7 +118,6 @@
         <field name="name">Tours</field>
         <field name="res_model">web_tour.tour</field>
         <field name="view_mode">kanban,list</field>
-        <field name="domain">[('custom', '=', False)]</field>
         <field name="search_view_id" ref="web_tour_tour_view_search"/>
         <field name="view_ids" eval="[
             Command.clear(),
@@ -63,8 +125,8 @@
             Command.create({'view_mode': 'list', 'view_id': ref('web_tour_tour_view_list')}),
         ]"/>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">No onboarding tours available</p>
-            <p>Install apps that provide onboarding tours to see them here.</p>
+            <p class="o_view_nocontent_smiling_face">No tours available</p>
+            <p>Install apps that provide onboarding tours, or record your own tours, to see them here.</p>
         </field>
     </record>
 </odoo>

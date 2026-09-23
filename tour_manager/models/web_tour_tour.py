@@ -12,6 +12,12 @@ class Web_TourTour(models.Model):
     module_name = fields.Char(string="App", compute='_compute_module_info', store=True, readonly=True)
     module_icon = fields.Char(compute='_compute_module_info', store=True, readonly=True)
     is_done = fields.Boolean(string="Done", compute='_compute_is_done')
+    title = fields.Char(help="Name shown in the Tours app instead of the technical name.")
+
+    @api.depends('title', 'name')
+    def _compute_display_name(self):
+        for tour in self:
+            tour.display_name = tour.title or tour.name
 
     def _compute_module_info(self):
         xmlids = self.sudo()._get_external_ids()
@@ -37,6 +43,17 @@ class Web_TourTour(models.Model):
         for fname in ('module', 'module_name', 'module_icon'):
             self.env.add_to_compute(self._fields[fname], records)
         return records
+
+    def action_edit_tour(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'views': [(self.env.ref('tour_manager.web_tour_tour_view_form').id, 'form')],
+            'target': 'current',
+        }
 
     def action_start_tour(self):
         self.ensure_one()
