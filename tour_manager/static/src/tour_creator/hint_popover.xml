@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="tour_manager.HintPopover">
+        <div class="o_tour_manager_ui o_tour_manager_hint_popover p-3">
+            <div class="mb-2">
+                <span class="text-muted">Clicked: </span>
+                <strong t-out="this.props.label"/>
+            </div>
+            <div t-if="!this.props.isUnique" class="alert alert-warning py-1 px-2 small">
+                This element could not be identified reliably: the tour may point at the wrong
+                element when it is played.
+            </div>
+            <label class="form-label fw-bold" for="tour_manager_hint">Hint</label>
+            <textarea id="tour_manager_hint" class="form-control mb-2" rows="3" t-ref="this.hintRef"
+                      placeholder="e.g. Click here to create a new quotation."
+                      t-model.proxy="this.state.content" t-on-keydown="this.onKeydown"/>
+            <label class="form-label fw-bold" for="tour_manager_position">Hint position</label>
+            <select id="tour_manager_position" class="form-select mb-3" t-model.proxy="this.state.tooltipPosition">
+                <option value="bottom">Bottom</option>
+                <option value="top">Top</option>
+                <option value="right">Right</option>
+                <option value="left">Left</option>
+            </select>
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary o_tour_manager_next" t-on-click="() => this.confirm()">Next</button>
+                <button class="btn btn-secondary o_tour_manager_skip" t-on-click="() => this.props.onSkip()"
+                        title="Record this click without a hint">Skip hint</button>
+                <button class="btn btn-link ms-auto o_tour_manager_discard" t-on-click="() => this.props.onDiscard()"
+                        title="Don't record this click and don't perform it">Discard</button>
+            </div>
+        </div>
+    </t>
+</templates>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="tour_manager.TourCreator">
+        <div class="o_tour_manager_ui o_tour_manager_bar position-fixed top-0 start-50 translate-middle-x mt-1 d-flex align-items-center gap-2 px-2 py-1 rounded bg-dark text-white shadow">
+            <span class="o_tour_manager_recording_dot rounded-circle bg-danger" aria-hidden="true"/>
+            <span class="text-truncate" style="max-width: 16rem;">
+                Recording <strong t-out="this.state.data.title"/>
+            </span>
+            <span class="badge text-bg-light o_tour_manager_step_count">
+                <t t-out="this.steps.length"/> step(s)
+            </span>
+            <button class="btn btn-sm btn-outline-light o_tour_manager_undo" t-on-click="() => this.undo()"
+                    t-att-disabled="!this.steps.length or this.state.pending or this.state.saving"
+                    title="Remove the last recorded step. What the click did on the page is not undone.">
+                <i class="fa fa-undo me-1"/>Undo
+            </button>
+            <button class="btn btn-sm btn-outline-light o_tour_manager_cancel" t-on-click="() => this.cancel()"
+                    t-att-disabled="this.state.saving">
+                Cancel
+            </button>
+            <button class="btn btn-sm btn-primary o_tour_manager_finish" t-on-click="() => this.finish()"
+                    t-att-disabled="this.state.pending or this.state.saving">
+                <i class="fa fa-flag-checkered me-1"/>Finish Tour
+            </button>
+        </div>
+    </t>
+</templates>

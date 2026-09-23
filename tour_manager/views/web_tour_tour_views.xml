@@ -4,30 +4,33 @@
         <field name="name">web_tour.tour.view.kanban.tour_manager</field>
         <field name="model">web_tour.tour</field>
         <field name="arch" type="xml">
-            <kanban create="0" edit="0" can_open="0" group_create="0" group_edit="0" group_delete="0" records_draggable="0">
+            <kanban on_create="tour_manager.tour_create_wizard_action" edit="0" can_open="0" group_create="0" group_edit="0" group_delete="0" records_draggable="0">
+                <field name="id"/>
                 <field name="custom"/>
                 <field name="module_icon"/>
                 <field name="is_done"/>
                 <templates>
-                    <t t-name="card" t-attf-class="flex-row align-items-center gap-3 #{record.custom.raw_value ? 'bg-info-subtle' : ''}">
-                        <img t-if="record.module_icon.raw_value" t-att-src="record.module_icon.raw_value"
-                             class="o_image_64_contain" alt="App icon"/>
-                        <i t-elif="record.custom.raw_value" class="fa fa-map-signs fa-3x text-info" title="Custom tour"/>
-                        <div class="flex-grow-1">
-                            <t t-if="record.custom.raw_value">
-                                <field name="display_name" class="fw-bold fs-5"/>
-                                <div><span class="badge text-bg-info">Custom</span></div>
-                            </t>
-                            <t t-else="">
-                                <field name="module_name" class="fw-bold fs-5"/>
-                                <div class="text-muted"><field name="display_name"/></div>
-                            </t>
-                            <span t-if="record.is_done.raw_value" class="badge text-bg-success">Done</span>
-                        </div>
-                        <div class="d-flex flex-column gap-1">
-                            <button name="action_start_tour" type="object" class="btn btn-primary">Start</button>
-                            <button name="action_edit_tour" type="object" class="btn btn-secondary"
-                                    invisible="not custom" groups="base.group_system">Edit</button>
+                    <t t-name="card" class="p-0">
+                        <div t-attf-class="d-flex flex-row align-items-center gap-3 p-3 w-100 h-100 rounded #{record.custom.raw_value ? 'bg-info-subtle' : ''} #{record.id.raw_value === context.tour_manager_highlight_id ? 'border border-2 border-primary o_tour_manager_highlight' : ''}">
+                            <img t-if="record.module_icon.raw_value" t-att-src="record.module_icon.raw_value"
+                                 class="o_image_64_contain" alt="App icon"/>
+                            <i t-elif="record.custom.raw_value" class="fa fa-map-signs fa-3x text-info" title="Custom tour"/>
+                            <div class="flex-grow-1">
+                                <t t-if="record.custom.raw_value">
+                                    <field name="display_name" class="fw-bold fs-5"/>
+                                    <div><span class="badge text-bg-info">Custom</span></div>
+                                </t>
+                                <t t-else="">
+                                    <field name="module_name" class="fw-bold fs-5"/>
+                                    <div class="text-muted"><field name="display_name"/></div>
+                                </t>
+                                <span t-if="record.is_done.raw_value" class="badge text-bg-success">Done</span>
+                            </div>
+                            <div class="d-flex flex-column gap-1">
+                                <button name="action_start_tour" type="object" class="btn btn-primary">Start</button>
+                                <button name="action_edit_tour" type="object" class="btn btn-secondary"
+                                        invisible="not custom" groups="base.group_system">Edit</button>
+                            </div>
                         </div>
                     </t>
                 </templates>
@@ -118,6 +121,7 @@
         <field name="name">Tours</field>
         <field name="res_model">web_tour.tour</field>
         <field name="view_mode">kanban,list</field>
+        <field name="domain" eval="False"/>
         <field name="search_view_id" ref="web_tour_tour_view_search"/>
         <field name="view_ids" eval="[
             Command.clear(),

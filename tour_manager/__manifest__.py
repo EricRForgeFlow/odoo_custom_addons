@@ -9,13 +9,27 @@ Tour Manager
 ============
 
 Odoo only plays each app's onboarding tour once. This app lists the tours
-available for the installed apps so they can be started again at any time.
+available for the installed apps so they can be started again at any time,
+and lets administrators record their own custom tours.
 """,
     'depends': ['web_tour'],
     'data': [
+        'security/ir.access.csv',
+        'wizard/tour_create_wizard_views.xml',
         'views/web_tour_tour_views.xml',
         'views/tour_manager_menus.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'tour_manager/static/src/tour_creator_state.js',
+            'tour_manager/static/src/tour_creator_plugin.js',
+            'tour_manager/static/src/tour_creator.scss',
+        ],
+        'tour_manager.tour_creator': [
+            ('include', 'web_tour.common'),
+            'tour_manager/static/src/tour_creator/**/*',
+        ],
+    },
     'application': True,
     'author': 'ForgeFlow',
     'license': 'LGPL-3',
