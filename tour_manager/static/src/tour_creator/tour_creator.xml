@@ -9,9 +9,12 @@
             <span class="badge text-bg-light o_tour_manager_step_count">
                 <t t-out="this.steps.length"/> step(s)
             </span>
+            <span t-if="this.state.editingLabel" class="fst-italic text-truncate o_tour_manager_editing" style="max-width: 12rem;">
+                Typing in <t t-out="this.state.editingLabel"/>…
+            </span>
             <button class="btn btn-sm btn-outline-light o_tour_manager_undo" t-on-click="() => this.undo()"
                     t-att-disabled="!this.steps.length or this.state.pending or this.state.saving"
-                    title="Remove the last recorded step. What the click did on the page is not undone.">
+                    title="Remove the last recorded action. What it did on the page is not undone.">
                 <i class="fa fa-undo me-1"/>Undo
             </button>
             <button class="btn btn-sm btn-outline-light o_tour_manager_cancel" t-on-click="() => this.cancel()"
