@@ -1,0 +1,2 @@
+id,name,model_id,group_id/id,operation,domain
+access_tour_manager_tour_create_wizard,access_tour_manager_tour_create_wizard,tour_manager.tour.create.wizard,base.group_system,crud,

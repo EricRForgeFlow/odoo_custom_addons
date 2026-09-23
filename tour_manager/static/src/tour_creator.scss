@@ -1,0 +1,20 @@
+.o_tour_manager_bar {
+    z-index: $zindex-tooltip + 1;
+    font-size: $font-size-sm;
+}
+
+.o_tour_manager_recording_dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    animation: o_tour_manager_blink 1.5s ease-in-out infinite;
+}
+
+.o_tour_manager_hint_popover {
+    width: 22rem;
+}
+
+@keyframes o_tour_manager_blink {
+    50% {
+        opacity: 0.3;
+    }
+}

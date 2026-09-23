@@ -1,2 +1,6 @@
 # Reuse Odoo's own ruff configuration so custom modules follow core conventions.
 extend = "../odoo/ruff.toml"
+
+[lint.extend-per-file-ignores]
+# Odoo imports submodules one per line in __init__.py files
+"__init__.py" = ["I001"]

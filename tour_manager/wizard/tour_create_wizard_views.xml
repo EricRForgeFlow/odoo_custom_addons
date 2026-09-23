@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="tour_create_wizard_view_form" model="ir.ui.view">
+        <field name="name">tour_manager.tour.create.wizard.view.form</field>
+        <field name="model">tour_manager.tour.create.wizard</field>
+        <field name="arch" type="xml">
+            <form string="New Tour">
+                <group>
+                    <field name="title" placeholder="e.g. Create your first quotation"/>
+                    <field name="start" widget="radio"/>
+                    <field name="menu_id" invisible="start != 'app'" required="start == 'app'"
+                           options="{'no_create': True, 'no_open': True}"/>
+                    <field name="url" invisible="start != 'url'" required="start == 'url'"/>
+                </group>
+                <label for="rainbow_man_message"/>
+                <field name="rainbow_man_message"/>
+                <p class="text-muted">
+                    Once started, click through the steps of your tour. Before each click is
+                    performed, you will be asked for the hint to show at that step.
+                </p>
+                <footer>
+                    <button name="action_start_recording" type="object" string="Start Recording" class="btn-primary"/>
+                    <button special="cancel" string="Cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="tour_create_wizard_action" model="ir.actions.act_window">
+        <field name="name">New Tour</field>
+        <field name="res_model">tour_manager.tour.create.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>
