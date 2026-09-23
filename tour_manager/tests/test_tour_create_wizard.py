@@ -15,6 +15,11 @@ class TestTourCreateWizard(TransactionCase):
         self.assertEqual(action['params']['name'], 'tour_manager_my_first_quote')
         self.assertEqual(action['params']['url'], '/odoo')
 
+    def test_start_recording_icon(self):
+        action = self._create_wizard(icon='oi:rocket').action_start_recording()
+        self.assertEqual(action['params']['icon'], 'oi:rocket')
+        self.assertEqual(self._create_wizard().action_start_recording()['params']['icon'], '')
+
     def test_unique_name(self):
         self.env['web_tour.tour'].create({'name': 'tour_manager_my_first_quote', 'custom': True})
         self.env['web_tour.tour'].create({'name': 'tour_manager_my_first_quote_2', 'custom': True, 'active': False})

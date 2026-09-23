@@ -50,6 +50,19 @@ class TestWebTourTour(TransactionCase):
         self.tour.title = "My Tour"
         self.assertEqual(self.tour._get_tour_json()['title'], "My Tour")
 
+    def test_search_icons(self):
+        Tour = self.env['web_tour.tour']
+        all_icons = Tour.tour_manager_search_icons()
+        self.assertIn('signpost', all_icons)
+        # Icons are also matched on their tags
+        money_icons = Tour.tour_manager_search_icons('money')
+        self.assertTrue(money_icons)
+        self.assertLess(len(money_icons), len(all_icons))
+
+    def test_get_app_icons(self):
+        app_icons = self.env['web_tour.tour'].tour_manager_get_app_icons()
+        self.assertIn({'name': "Tours", 'url': '/tour_manager/static/description/icon.png'}, app_icons)
+
     def test_action_edit_tour(self):
         tour = self.env['web_tour.tour'].create({'name': 'tour_manager_custom_tour', 'custom': True})
         action = tour.action_edit_tour()

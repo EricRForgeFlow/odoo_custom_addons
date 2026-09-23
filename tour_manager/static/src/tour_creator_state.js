@@ -14,6 +14,7 @@ const TOUR_CREATOR_LOCAL_STORAGE_KEY = "tour_manager.tour_creator";
  * @property {string} name technical name of the tour to create
  * @property {string} url starting URL
  * @property {string} rainbow_man_message
+ * @property {string} [icon]
  * @property {TourCreatorStep[]} steps
  */
 

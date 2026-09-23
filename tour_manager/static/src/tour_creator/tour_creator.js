@@ -658,7 +658,7 @@ export class TourCreator extends Component {
             return;
         }
         this.state.saving = true;
-        const { title, name, url, rainbow_man_message, steps } = this.state.data;
+        const { title, name, url, rainbow_man_message, icon, steps } = this.state.data;
         let tourId;
         try {
             [tourId] = await this.orm.create("web_tour.tour", [
@@ -667,6 +667,7 @@ export class TourCreator extends Component {
                     name,
                     url,
                     rainbow_man_message,
+                    icon: icon || false,
                     custom: true,
                     step_ids: steps.map(({ group, ...step }, index) => [
                         0,

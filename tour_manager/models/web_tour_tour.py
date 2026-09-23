@@ -1,5 +1,7 @@
 from odoo import api, fields, models
 
+from odoo.addons.web.icons import search_icons
+
 
 class Web_TourTour(models.Model):
     _inherit = 'web_tour.tour'
@@ -11,6 +13,10 @@ class Web_TourTour(models.Model):
     module_icon = fields.Char(compute='_compute_module_info', store=True, readonly=True)
     is_done = fields.Boolean(string="Done", compute='_compute_is_done')
     title = fields.Char(help="Name shown in the Tours app instead of the technical name.")
+    icon = fields.Char(
+        help="Icon shown in the Tours app: an icon of Odoo's icon set (prefixed by \"oi:\") "
+             "or the URL of an image, e.g. an app icon.",
+    )
 
     @api.depends('title', 'name')
     def _compute_display_name(self):
@@ -33,6 +39,24 @@ class Web_TourTour(models.Model):
     def _compute_is_done(self):
         for tour in self:
             tour.is_done = self.env.user in tour.user_consumed_ids
+
+    @api.model
+    def tour_manager_search_icons(self, needle=''):
+        """Return the names of the icons of Odoo's icon set matching `needle`
+        (all of them if it's empty), matched against their names and tags."""
+        return [name for name, _has_fill in search_icons(needle or '')]
+
+    @api.model
+    def tour_manager_get_app_icons(self):
+        """Return the icons of the apps of the home screen the user can see."""
+        menus = self.env['ir.ui.menu'].search([('parent_id', '=', False), ('web_icon', '!=', False)])
+        app_icons = []
+        for menu in menus:
+            # web_icon is "<module>,<path of the icon in the module>"
+            module, _sep, path = menu.web_icon.partition(',')
+            if path.lower().endswith(('.png', '.svg', '.jpg', '.jpeg', '.gif', '.webp')):
+                app_icons.append({'name': menu.name, 'url': f'/{module}/{path}'})
+        return app_icons
 
     def _load_records(self, data_list, update=False):
         records = super()._load_records(data_list, update=update)

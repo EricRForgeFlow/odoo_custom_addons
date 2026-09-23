@@ -7,6 +7,7 @@
             <form string="New Tour">
                 <group>
                     <field name="title" placeholder="e.g. Create your first quotation"/>
+                    <field name="icon" widget="tour_manager_icon_picker"/>
                     <field name="start" widget="radio"/>
                     <field name="menu_id" invisible="start != 'app'" required="start == 'app'"
                            options="{'no_create': True, 'no_open': True}"/>

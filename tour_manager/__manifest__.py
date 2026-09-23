@@ -27,6 +27,7 @@ and lets administrators record their own custom tours.
             'tour_manager/static/src/tour_replay/tour_replay_plugin.js',
             'tour_manager/static/src/tour_replay/tour_replay_action.js',
             'tour_manager/static/src/views/**/*',
+            'tour_manager/static/src/icon_picker/**/*',
         ],
         'web.assets_frontend': [
             'tour_manager/static/src/tour_replay/tour_replay_plugin.js',

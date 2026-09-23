@@ -6,13 +6,18 @@
         <field name="arch" type="xml">
             <kanban js_class="tour_manager_kanban" on_create="tour_manager.tour_create_wizard_action" edit="0" can_open="0" group_create="0" group_edit="0" group_delete="0" records_draggable="0">
                 <field name="id"/>
+                <field name="icon"/>
                 <field name="custom"/>
                 <field name="module_icon"/>
                 <field name="is_done"/>
                 <templates>
                     <t t-name="card" class="p-0">
                         <div t-attf-class="d-flex flex-row align-items-center gap-3 p-3 w-100 h-100 rounded #{record.custom.raw_value ? 'bg-info-subtle' : ''} #{record.id.raw_value === context.tour_manager_highlight_id ? 'border border-2 border-primary o_tour_manager_highlight' : ''}">
-                            <img t-if="record.module_icon.raw_value" t-att-src="record.module_icon.raw_value"
+                            <t t-set="icon" t-value="record.icon.raw_value"/>
+                            <i t-if="icon and icon.startsWith('oi:')" class="oi text-info o_tour_manager_icon" style="font-size: 3rem;"
+                               t-att-data-icon="icon.slice(3)"/>
+                            <img t-elif="icon" t-att-src="icon" class="o_image_64_contain o_tour_manager_icon" alt="Icon"/>
+                            <img t-elif="record.module_icon.raw_value" t-att-src="record.module_icon.raw_value"
                                  class="o_image_64_contain" alt="App icon"/>
                             <i t-elif="record.custom.raw_value" class="oi text-info" style="font-size: 3rem;" data-icon="signpost" title="Custom tour"/>
                             <div class="flex-grow-1">
@@ -73,6 +78,7 @@
                         <group>
                             <field name="name" string="Technical Name"/>
                             <field name="url"/>
+                            <field name="icon" widget="tour_manager_icon_picker"/>
                         </group>
                         <group>
                             <field name="sequence"/>

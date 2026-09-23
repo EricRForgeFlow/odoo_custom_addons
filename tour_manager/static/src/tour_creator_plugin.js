@@ -105,7 +105,7 @@ export class TourCreatorPlugin extends Plugin {
 services.add(TourCreatorPlugin);
 
 registry.category("actions").add("tour_manager.start_recording", (env, action) => {
-    const { title, name, url, rainbow_man_message } = action.params;
-    tourCreatorState.set({ title, name, url, rainbow_man_message, steps: [] });
+    const { title, name, url, rainbow_man_message, icon } = action.params;
+    tourCreatorState.set({ title, name, url, rainbow_man_message, icon, steps: [] });
     browser.location.assign(url);
 });
