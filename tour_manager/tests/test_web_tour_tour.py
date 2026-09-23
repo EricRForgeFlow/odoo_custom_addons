@@ -45,6 +45,11 @@ class TestWebTourTour(TransactionCase):
         tour.title = "My Custom Tour"
         self.assertEqual(tour.display_name, "My Custom Tour")
 
+    def test_tour_json_title(self):
+        self.assertEqual(self.tour._get_tour_json()['title'], 'Tour Manager')
+        self.tour.title = "My Tour"
+        self.assertEqual(self.tour._get_tour_json()['title'], "My Tour")
+
     def test_action_edit_tour(self):
         tour = self.env['web_tour.tour'].create({'name': 'tour_manager_custom_tour', 'custom': True})
         action = tour.action_edit_tour()

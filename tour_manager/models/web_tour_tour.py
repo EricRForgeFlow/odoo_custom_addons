@@ -42,6 +42,12 @@ class Web_TourTour(models.Model):
             self.env.add_to_compute(self._fields[fname], records)
         return records
 
+    def _get_tour_json(self):
+        tour_json = super()._get_tour_json()
+        # Name shown to the user, e.g. when asked whether to leave the tour
+        tour_json['title'] = self.title or self.module_name or self.name
+        return tour_json
+
     def action_edit_tour(self):
         self.ensure_one()
         return {
