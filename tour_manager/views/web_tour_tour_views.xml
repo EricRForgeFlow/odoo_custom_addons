@@ -120,6 +120,7 @@
     <record id="web_tour_tour_action" model="ir.actions.act_window">
         <field name="name">Tours</field>
         <field name="res_model">web_tour.tour</field>
+        <field name="path">tour_manager</field>
         <field name="view_mode">kanban,list</field>
         <field name="domain" eval="False"/>
         <field name="search_view_id" ref="web_tour_tour_view_search"/>

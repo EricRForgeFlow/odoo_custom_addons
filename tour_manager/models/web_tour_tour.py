@@ -1,5 +1,3 @@
-from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
-
 from odoo import api, fields, models
 
 
@@ -56,11 +54,14 @@ class Web_TourTour(models.Model):
         }
 
     def action_start_tour(self):
+        """Replay the tour, without switching the user to onboarding mode."""
         self.ensure_one()
-        url = urlsplit(self.url or '/odoo')
-        query = urlencode([*parse_qsl(url.query), ('tour', self.name)])
         return {
-            'type': 'ir.actions.act_url',
-            'url': urlunsplit(url._replace(query=query)),
-            'target': 'self',
+            'type': 'ir.actions.client',
+            'tag': 'tour_manager.start_tour',
+            'params': {
+                'name': self.name,
+                'url': self.url or '/odoo',
+                'rainbow_man_message': self.rainbow_man_message or '',
+            },
         }

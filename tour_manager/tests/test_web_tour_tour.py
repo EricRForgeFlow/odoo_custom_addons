@@ -33,9 +33,11 @@ class TestWebTourTour(TransactionCase):
 
     def test_action_start_tour(self):
         action = self.tour.action_start_tour()
-        self.assertEqual(action['url'], '/odoo/action-studio?mode=home_menu&tour=tour_manager_test_tour')
+        self.assertEqual(action['tag'], 'tour_manager.start_tour')
+        self.assertEqual(action['params']['name'], 'tour_manager_test_tour')
+        self.assertEqual(action['params']['url'], '/odoo/action-studio?mode=home_menu')
         self.tour.url = False
-        self.assertEqual(self.tour.action_start_tour()['url'], '/odoo?tour=tour_manager_test_tour')
+        self.assertEqual(self.tour.action_start_tour()['params']['url'], '/odoo')
 
     def test_display_name(self):
         tour = self.env['web_tour.tour'].create({'name': 'tour_manager_custom_tour', 'custom': True})
