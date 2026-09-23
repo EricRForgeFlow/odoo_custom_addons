@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_tour_manager_root"
+        name="Tours"
+        web_icon="tour_manager,static/description/icon.png"
+        groups="base.group_user"
+        sequence="300"/>
+
+    <menuitem id="menu_tour_manager_tours"
+        name="Tours"
+        parent="menu_tour_manager_root"
+        action="web_tour_tour_action"
+        sequence="10"/>
+</odoo>

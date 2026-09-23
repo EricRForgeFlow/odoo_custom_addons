@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="web_tour_tour_view_kanban" model="ir.ui.view">
+        <field name="name">web_tour.tour.view.kanban.tour_manager</field>
+        <field name="model">web_tour.tour</field>
+        <field name="arch" type="xml">
+            <kanban create="0" edit="0" group_create="0" group_edit="0" group_delete="0" records_draggable="0">
+                <field name="module_icon"/>
+                <field name="is_done"/>
+                <templates>
+                    <t t-name="card" class="flex-row align-items-center gap-3">
+                        <img t-if="record.module_icon.raw_value" t-att-src="record.module_icon.raw_value"
+                             class="o_image_64_contain" alt="App icon"/>
+                        <div class="flex-grow-1">
+                            <field name="module_name" class="fw-bold fs-5"/>
+                            <div class="text-muted"><field name="name"/></div>
+                            <span t-if="record.is_done.raw_value" class="badge text-bg-success">Done</span>
+                        </div>
+                        <button name="action_start_tour" type="object" class="btn btn-primary">Start</button>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="web_tour_tour_view_list" model="ir.ui.view">
+        <field name="name">web_tour.tour.view.list.tour_manager</field>
+        <field name="model">web_tour.tour</field>
+        <field name="arch" type="xml">
+            <list create="0" edit="0" default_order="module_name, sequence, name">
+                <field name="module_name"/>
+                <field name="name"/>
+                <field name="url" optional="hide"/>
+                <field name="is_done"/>
+                <button name="action_start_tour" type="object" string="Start" class="btn-link" icon="fa-play"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="web_tour_tour_view_search" model="ir.ui.view">
+        <field name="name">web_tour.tour.view.search.tour_manager</field>
+        <field name="model">web_tour.tour</field>
+        <field name="arch" type="xml">
+            <search string="Tours">
+                <field name="name"/>
+                <field name="module_name"/>
+                <group>
+                    <filter string="App" name="group_by_module_name" context="{'group_by': 'module_name'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="web_tour_tour_action" model="ir.actions.act_window">
+        <field name="name">Tours</field>
+        <field name="res_model">web_tour.tour</field>
+        <field name="view_mode">kanban,list</field>
+        <field name="domain">[('custom', '=', False)]</field>
+        <field name="search_view_id" ref="web_tour_tour_view_search"/>
+        <field name="view_ids" eval="[
+            Command.clear(),
+            Command.create({'view_mode': 'kanban', 'view_id': ref('web_tour_tour_view_kanban')}),
+            Command.create({'view_mode': 'list', 'view_id': ref('web_tour_tour_view_list')}),
+        ]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No onboarding tours available</p>
+            <p>Install apps that provide onboarding tours to see them here.</p>
+        </field>
+    </record>
+</odoo>
