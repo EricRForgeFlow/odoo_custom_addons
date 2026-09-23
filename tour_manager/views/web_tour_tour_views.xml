@@ -4,7 +4,7 @@
         <field name="name">web_tour.tour.view.kanban.tour_manager</field>
         <field name="model">web_tour.tour</field>
         <field name="arch" type="xml">
-            <kanban on_create="tour_manager.tour_create_wizard_action" edit="0" can_open="0" group_create="0" group_edit="0" group_delete="0" records_draggable="0">
+            <kanban js_class="tour_manager_kanban" on_create="tour_manager.tour_create_wizard_action" edit="0" can_open="0" group_create="0" group_edit="0" group_delete="0" records_draggable="0">
                 <field name="id"/>
                 <field name="custom"/>
                 <field name="module_icon"/>
@@ -14,7 +14,7 @@
                         <div t-attf-class="d-flex flex-row align-items-center gap-3 p-3 w-100 h-100 rounded #{record.custom.raw_value ? 'bg-info-subtle' : ''} #{record.id.raw_value === context.tour_manager_highlight_id ? 'border border-2 border-primary o_tour_manager_highlight' : ''}">
                             <img t-if="record.module_icon.raw_value" t-att-src="record.module_icon.raw_value"
                                  class="o_image_64_contain" alt="App icon"/>
-                            <i t-elif="record.custom.raw_value" class="fa fa-map-signs fa-3x text-info" title="Custom tour"/>
+                            <i t-elif="record.custom.raw_value" class="oi text-info" style="font-size: 3rem;" data-icon="signpost" title="Custom tour"/>
                             <div class="flex-grow-1">
                                 <t t-if="record.custom.raw_value">
                                     <field name="display_name" class="fw-bold fs-5"/>
@@ -42,14 +42,14 @@
         <field name="name">web_tour.tour.view.list.tour_manager</field>
         <field name="model">web_tour.tour</field>
         <field name="arch" type="xml">
-            <list create="0" edit="0" default_order="custom, module_name, sequence, name" decoration-info="custom">
+            <list js_class="tour_manager_list" create="0" edit="0" default_order="custom, module_name, sequence, name" decoration-info="custom">
                 <field name="custom" column_invisible="1"/>
                 <field name="module_name"/>
                 <field name="display_name" string="Tour"/>
                 <field name="url" optional="hide"/>
                 <field name="is_done"/>
-                <button name="action_start_tour" type="object" string="Start" class="btn-link" icon="fa-play"/>
-                <button name="action_edit_tour" type="object" string="Edit" class="btn-link" icon="fa-pencil"
+                <button name="action_start_tour" type="object" string="Start" class="btn-link" icon="play_arrow"/>
+                <button name="action_edit_tour" type="object" string="Edit" class="btn-link" icon="edit"
                         invisible="not custom" groups="base.group_system"/>
             </list>
         </field>

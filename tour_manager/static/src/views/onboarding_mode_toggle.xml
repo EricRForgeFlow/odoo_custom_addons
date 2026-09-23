@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="tour_manager.OnboardingModeToggle">
+        <div t-if="this.debug.isActive()" class="d-flex align-items-center gap-2 me-2 o_tour_manager_debug">
+            <div class="form-check form-switch mb-0 text-nowrap"
+                 title="In onboarding mode, the onboarding tours you haven't done start by themselves.">
+                <input type="checkbox" class="form-check-input o_tour_manager_onboarding_mode"
+                       id="tour_manager_onboarding_mode" t-att-checked="this.state.enabled"
+                       t-on-change="() => this.toggle()"/>
+                <label class="form-check-label" for="tour_manager_onboarding_mode">Onboarding mode</label>
+            </div>
+            <span t-if="this.currentTour" class="badge text-bg-warning d-inline-flex align-items-center o_tour_manager_current_tour">
+                <span class="text-truncate" style="max-width: 16rem;">
+                    In progress: <t t-out="this.currentTour"/><t t-if="this.isReplay"> (replay)</t>
+                </span>
+                <a href="#" class="ms-1 text-reset" t-on-click.prevent="() => this.stopCurrentTour()" title="Stop this tour">
+                    <i class="oi" data-icon="close"/>
+                </a>
+            </span>
+        </div>
+    </t>
+</templates>

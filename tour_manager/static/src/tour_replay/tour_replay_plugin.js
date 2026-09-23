@@ -1,4 +1,4 @@
-import { Plugin, usePlugin } from "@odoo/owl";
+import { Plugin, useListener, usePlugin } from "@odoo/owl";
 import { services } from "@web/core/services";
 import { TourPlugin } from "@web_tour/tour_plugin";
 import { tourState } from "@web_tour/tour_state";
@@ -23,6 +23,19 @@ export class TourReplayPlugin extends Plugin {
         if (tourState.getCurrentTour() && tourState.getCurrentConfig()?.[REPLAY_CONFIG_KEY]) {
             this.tour.toursEnabled = true;
         }
+        // "Stop Tour" switches onboarding mode off and reloads the page,
+        // counting on the reload to drop the tour, but a replay would be
+        // resumed as it doesn't depend on onboarding mode: forget it first.
+        useListener(
+            window,
+            "click",
+            (ev) => {
+                if (ev.target.closest?.(".o_tour_pointer_content button")) {
+                    tourState.clear();
+                }
+            },
+            { capture: true }
+        );
     }
 
     /**
