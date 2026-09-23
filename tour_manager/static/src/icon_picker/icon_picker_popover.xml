@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="tour_manager.IconPickerPopover">
+        <div class="o_tour_manager_icon_picker p-2">
+            <ul class="nav nav-tabs mb-2">
+                <li class="nav-item">
+                    <a href="#" class="nav-link o_tour_manager_icon_tab_apps" t-att-class="{ active: this.state.tab === 'apps' }"
+                       t-on-click.prevent="() => this.state.tab = 'apps'">Apps</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link o_tour_manager_icon_tab_icons" t-att-class="{ active: this.state.tab === 'icons' }"
+                       t-on-click.prevent="() => this.state.tab = 'icons'">Icons</a>
+                </li>
+            </ul>
+            <div t-if="this.state.tab === 'apps'" class="o_tour_manager_icon_grid">
+                <button t-foreach="this.state.apps" t-as="app" t-key="app.url" type="button"
+                        class="btn btn-light p-1 o_tour_manager_app_icon"
+                        t-att-class="{ active: this.props.value === app.url }"
+                        t-att-title="app.name" t-on-click="() => this.select(app.url)">
+                    <img t-att-src="app.url" t-att-alt="app.name" class="w-100 h-100"/>
+                </button>
+            </div>
+            <t t-else="">
+                <input type="search" class="form-control mb-2 o_tour_manager_icon_search" placeholder="Search icons, e.g. money"
+                       t-model.proxy="this.state.search" t-on-input="() => this.searchIcons()"/>
+                <div class="o_tour_manager_icon_grid">
+                    <button t-foreach="this.state.icons" t-as="icon" t-key="icon" type="button"
+                            class="btn btn-light p-1 o_tour_manager_set_icon"
+                            t-att-class="{ active: this.props.value === 'oi:' + icon }"
+                            t-att-title="icon" t-att-data-name="icon" t-on-click="() => this.select('oi:' + icon)">
+                        <i class="oi fs-3" t-att-data-icon="icon"/>
+                    </button>
+                </div>
+                <div t-if="!this.state.icons.length" class="text-muted text-center py-3">No icons found</div>
+            </t>
+        </div>
+    </t>
+</templates>

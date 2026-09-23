@@ -9,6 +9,7 @@ class TourManagerTourCreateWizard(models.TransientModel):
     _description = "Create a custom tour"
 
     title = fields.Char(required=True)
+    icon = fields.Char(help="Icon shown in the Tours app.")
     start = fields.Selection(
         selection=[
             ('home', "Home Screen"),
@@ -75,5 +76,6 @@ class TourManagerTourCreateWizard(models.TransientModel):
                 'name': self._get_tour_name(),
                 'url': self._get_start_url(),
                 'rainbow_man_message': self.rainbow_man_message or '',
+                'icon': self.icon or '',
             },
         }
