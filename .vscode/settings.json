@@ -1,0 +1,13 @@
+{
+    "python.defaultInterpreterPath": "${workspaceFolder}/../odoo/.venv/bin/python",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/../odoo",
+        "${workspaceFolder}/../odoo/addons",
+        "${workspaceFolder}/../enterprise"
+    ],
+    "python.analysis.exclude": ["**/node_modules", "**/.filestore"],
+    "ruff.configuration": "${workspaceFolder}/ruff.toml",
+    "files.exclude": {
+        "**/__pycache__": true
+    }
+}

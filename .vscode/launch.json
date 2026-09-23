@@ -1,0 +1,58 @@
+{
+    "version": "0.2.0",
+    "inputs": [
+        {
+            "id": "database",
+            "type": "promptString",
+            "description": "Database name",
+            "default": "odoo20"
+        },
+        {
+            "id": "modules",
+            "type": "promptString",
+            "description": "Comma-separated modules to install/update/test"
+        }
+    ],
+    "configurations": [
+        {
+            "name": "Odoo: run",
+            "type": "debugpy",
+            "request": "launch",
+            "python": "${workspaceFolder}/../odoo/.venv/bin/python",
+            "program": "${workspaceFolder}/../odoo/odoo-bin",
+            "args": ["-c", "${workspaceFolder}/odoo.conf", "-d", "${input:database}", "--dev=xml,reload"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Odoo: update modules",
+            "type": "debugpy",
+            "request": "launch",
+            "python": "${workspaceFolder}/../odoo/.venv/bin/python",
+            "program": "${workspaceFolder}/../odoo/odoo-bin",
+            "args": ["-c", "${workspaceFolder}/odoo.conf", "-d", "${input:database}", "-u", "${input:modules}", "--dev=xml"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Odoo: test modules",
+            "type": "debugpy",
+            "request": "launch",
+            "python": "${workspaceFolder}/../odoo/.venv/bin/python",
+            "program": "${workspaceFolder}/../odoo/odoo-bin",
+            "args": [
+                "-c", "${workspaceFolder}/odoo.conf",
+                "-d", "${input:database}",
+                "-i", "${input:modules}",
+                "--test-tags", "/${input:modules}",
+                "--stop-after-init",
+                "--http-port", "8079"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ]
+}
