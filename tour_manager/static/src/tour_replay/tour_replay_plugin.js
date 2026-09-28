@@ -1,4 +1,5 @@
 import { Plugin, useListener, usePlugin } from "@odoo/owl";
+import { ORM } from "@web/core/orm_plugin";
 import { services } from "@web/core/services";
 import { TourPlugin } from "@web_tour/tour_plugin";
 import { tourState } from "@web_tour/tour_state";
@@ -11,6 +12,8 @@ import { tourState } from "@web_tour/tour_state";
 // Also defined in tour_interactive_patch.js.
 export const REPLAY_CONFIG_KEY = "tourManagerReplay";
 export const CHECK_CONFIG_KEY = "tourManagerCheck";
+/** Flag of the custom tours started by themselves (see TourAutoStartPlugin). */
+export const AUTO_START_CONFIG_KEY = "tourManagerAutoStart";
 
 /**
  * web_tour only resumes a manual tour after a page load when the user is in
@@ -18,6 +21,7 @@ export const CHECK_CONFIG_KEY = "tourManagerCheck";
  * mode is on, for the current page only, so that the replay goes on.
  */
 export class TourReplayPlugin extends Plugin {
+    orm = usePlugin(ORM);
     tour = usePlugin(TourPlugin);
 
     setup() {
@@ -32,6 +36,11 @@ export class TourReplayPlugin extends Plugin {
             "click",
             (ev) => {
                 if (ev.target.closest?.(".o_tour_pointer_content button")) {
+                    const name = tourState.getCurrentTour();
+                    if (name && tourState.getCurrentConfig()?.[AUTO_START_CONFIG_KEY]) {
+                        // Stopping a tour that started by itself: don't start it again
+                        this.orm.silent.call("web_tour.tour", "tour_manager_dismiss", [name]);
+                    }
                     tourState.clear();
                 }
             },
@@ -45,8 +54,10 @@ export class TourReplayPlugin extends Plugin {
      * @param {string} options.url
      * @param {string} [options.rainbowManMessage]
      * @param {boolean} [options.check] whether to check the tour: play it automatically
+     * @param {boolean} [options.autoStart] whether the tour starts by itself
+     *  (without `url`, it starts on the current page)
      */
-    startReplay(name, { url, rainbowManMessage, check = false }) {
+    startReplay(name, { url, rainbowManMessage, check = false, autoStart = false }) {
         // startTour() switches the user to onboarding mode unless it's already on.
         this.tour.toursEnabled = true;
         return this.tour.startTour(name, {
@@ -57,6 +68,7 @@ export class TourReplayPlugin extends Plugin {
             // A check plays the tour automatically ("robot" mode), finding the
             // element of each step the same way as for a user.
             ...(check && { robot: true, [CHECK_CONFIG_KEY]: true }),
+            ...(autoStart && { [AUTO_START_CONFIG_KEY]: true }),
         });
     }
 }

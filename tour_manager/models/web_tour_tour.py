@@ -1,4 +1,5 @@
 from odoo import api, fields, models
+from odoo.fields import Domain
 
 from odoo.addons.web.icons import search_icons
 
@@ -22,6 +23,36 @@ class Web_TourTour(models.Model):
     check_message = fields.Text(string="Check Result", readonly=True)
     check_step = fields.Integer(string="Failed Step", readonly=True, help="Number of the step the last check failed at.")
     title = fields.Char(help="Name shown in the Tours app instead of the technical name.")
+    # Visibility: what users are shown in the Tours app and what starts by
+    # itself, not a security barrier (tours are guidance, not sensitive data)
+    group_ids = fields.Many2many(
+        'res.groups',
+        'tour_manager_tour_group_rel',
+        'tour_id',
+        'group_id',
+        string="Visible to",
+        help="Groups whose users see the tour in the Tours app, and for whom it can start automatically. "
+             "Empty: everyone.",
+    )
+    auto_start = fields.Boolean(
+        string="Start Automatically",
+        help="The tour plays by itself for the users who can see it and haven't done it yet. "
+             "(The onboarding tours of apps start by themselves in onboarding mode.)",
+    )
+    user_dismissed_ids = fields.Many2many(
+        'res.users',
+        'tour_manager_tour_dismissed_rel',
+        'tour_id',
+        'user_id',
+        string="Dismissed By",
+        help="Users who stopped the tour when it started by itself: it doesn't start by itself for them anymore.",
+    )
+    is_visible = fields.Boolean(
+        string="Visible to Me",
+        compute='_compute_is_visible',
+        search='_search_is_visible',
+        help="Whether the current user sees the tour in the Tours app. Administrators see all tours.",
+    )
     icon = fields.Char(
         help="Icon shown in the Tours app: an icon of Odoo's icon set (prefixed by \"oi:\") "
              "or the URL of an image, e.g. an app icon.",
@@ -31,6 +62,26 @@ class Web_TourTour(models.Model):
     def _compute_display_name(self):
         for tour in self:
             tour.display_name = tour.title or tour.name
+
+    @api.model
+    def _get_visible_domain(self, user=None):
+        """Domain of the tours visible to `user` (the current user by default)."""
+        user = user or self.env.user
+        return Domain('group_ids', '=', False) | Domain('group_ids', 'in', user.all_group_ids.ids)
+
+    @api.depends_context('uid')
+    @api.depends('group_ids')
+    def _compute_is_visible(self):
+        is_admin = self.env.user.has_group('base.group_system')
+        user_groups = self.env.user.all_group_ids
+        for tour in self:
+            tour.is_visible = is_admin or not tour.group_ids or bool(tour.group_ids & user_groups)
+
+    def _search_is_visible(self, operator, value):
+        if operator not in ('in', 'not in'):
+            return NotImplemented
+        visible = Domain.TRUE if self.env.user.has_group('base.group_system') else self._get_visible_domain()
+        return visible if (True in value) == (operator == 'in') else ~visible
 
     def _compute_module_info(self):
         xmlids = self.sudo()._get_external_ids()
@@ -66,6 +117,54 @@ class Web_TourTour(models.Model):
             if path.lower().endswith(('.png', '.svg', '.jpg', '.jpeg', '.gif', '.webp')):
                 app_icons.append({'name': menu.name, 'url': f'/{module}/{path}'})
         return app_icons
+
+    @api.model
+    def get_current_tour(self):
+        """The onboarding tours of apps start by themselves in onboarding mode
+        (as web_tour does), only for the users they're visible to. Custom tours
+        starting automatically are handled apart (see `_get_auto_start_tours`)."""
+        user = self.env.user
+        if not (user and user.tour_enabled and user._is_internal()):
+            return super().get_current_tour()
+        tour = self.search(
+            Domain('custom', '=', False)
+            & self._get_visible_domain(user)
+            & Domain('user_consumed_ids', 'not in', user.id),
+            limit=1,
+        )
+        return tour._get_tour_json() if tour else False
+
+    @api.model
+    def _get_auto_start_tours(self):
+        """Return the custom tours to start by themselves for the current user,
+        when they reach their starting page: the ones visible to them that they
+        haven't done nor dismissed."""
+        user = self.env.user
+        if not (user and user._is_internal()):
+            return []
+        tours = self.search(
+            Domain('custom', '=', True)
+            & Domain('auto_start', '=', True)
+            & self._get_visible_domain(user)
+            & Domain('user_consumed_ids', 'not in', user.id)
+            & Domain('user_dismissed_ids', 'not in', user.id),
+        )
+        return [
+            {
+                'name': tour.name,
+                'url': tour.url or '/odoo',
+                'rainbow_man_message': tour.rainbow_man_message or '',
+            }
+            for tour in tours
+        ]
+
+    @api.model
+    def tour_manager_dismiss(self, name):
+        """The current user stopped the tour named `name`: if it started by
+        itself, don't start it by itself for them anymore."""
+        tour = self.search([('name', '=', name), ('custom', '=', True), ('auto_start', '=', True)], limit=1)
+        if tour:
+            tour.sudo().user_dismissed_ids = [fields.Command.link(self.env.user.id)]
 
     def _load_records(self, data_list, update=False):
         records = super()._load_records(data_list, update=update)
