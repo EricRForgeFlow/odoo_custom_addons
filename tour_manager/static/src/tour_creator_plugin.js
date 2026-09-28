@@ -64,10 +64,11 @@ export class TourCreatorPlugin extends Plugin {
      *
      * @param {Object} [context] additional context of the Tours action
      */
-    stopRecording(context = {}) {
+    async stopRecording(context = {}) {
         tourCreatorState.clear();
         this.removeTourCreator();
         this.removeTourCreator = () => {};
+        await this.discardFormChanges();
         const menuService = this.env.services.menu;
         const menu = menuService?.getAll().find((menu) => menu.xmlid === TOURS_MENU);
         return this.action.doAction(TOURS_ACTION, {
@@ -75,6 +76,23 @@ export class TourCreatorPlugin extends Plugin {
             additionalContext: context,
             onActionReady: () => menu && menuService.setCurrentMenu(menu),
         });
+    }
+
+    /**
+     * The record shown may have been changed while recording, to show how
+     * things are done, and may not even be valid (e.g. a quotation without
+     * customer), which would prevent leaving it: discard its unsaved changes.
+     */
+    async discardFormChanges() {
+        const discardButton = document.querySelector(".o_form_view .o_form_button_cancel");
+        if (!discardButton?.offsetParent) {
+            return;
+        }
+        discardButton.click();
+        const start = Date.now();
+        while (document.querySelector(".o_form_view .o_form_button_cancel") && Date.now() - start < 2000) {
+            await new Promise((resolve) => setTimeout(resolve, 50));
+        }
     }
 
     /**
