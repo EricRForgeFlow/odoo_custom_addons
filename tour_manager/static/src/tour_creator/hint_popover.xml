@@ -19,15 +19,22 @@
                 <option value="left">Left</option>
             </select>
             <div class="d-flex gap-2">
-                <button class="btn btn-primary o_tour_manager_next" t-on-click="() => this.confirm()">Next</button>
-                <button class="btn btn-secondary o_tour_manager_skip" t-on-click="() => this.props.onSkip()"
-                        title="Record this step without a hint">Skip hint</button>
-                <button t-if="this.props.mode === 'before'" class="btn btn-link ms-auto o_tour_manager_discard"
-                        t-on-click="() => this.props.onDiscard()"
-                        title="Don't record this click and don't perform it">Discard</button>
-                <button t-else="" class="btn btn-link ms-auto o_tour_manager_discard"
-                        t-on-click="() => this.props.onDiscard()"
-                        title="Don't record this step. What was done on the page is kept.">Don't record</button>
+                <button class="btn btn-primary o_tour_manager_next" t-on-click="() => this.confirm()"
+                        t-out="this.props.confirmLabel or 'Next'"/>
+                <t t-if="this.props.mode === 'pick'">
+                    <button class="btn btn-link ms-auto o_tour_manager_discard" t-on-click="() => this.props.onDiscard()"
+                            title="Pick another element">Cancel</button>
+                </t>
+                <t t-else="">
+                    <button class="btn btn-secondary o_tour_manager_skip" t-on-click="() => this.props.onSkip()"
+                            title="Record this step without a hint">Skip hint</button>
+                    <button t-if="this.props.mode === 'before'" class="btn btn-link ms-auto o_tour_manager_discard"
+                            t-on-click="() => this.props.onDiscard()"
+                            title="Don't record this click and don't perform it">Discard</button>
+                    <button t-else="" class="btn btn-link ms-auto o_tour_manager_discard"
+                            t-on-click="() => this.props.onDiscard()"
+                            title="Don't record this step. What was done on the page is kept.">Don't record</button>
+                </t>
             </div>
         </div>
     </t>

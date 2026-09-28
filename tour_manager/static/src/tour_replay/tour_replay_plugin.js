@@ -14,6 +14,8 @@ export const REPLAY_CONFIG_KEY = "tourManagerReplay";
 export const CHECK_CONFIG_KEY = "tourManagerCheck";
 /** Flag of the custom tours started by themselves (see TourAutoStartPlugin). */
 export const AUTO_START_CONFIG_KEY = "tourManagerAutoStart";
+/** Number of steps played automatically, to reach the step after (see TourCreator). */
+export const PLAY_UNTIL_CONFIG_KEY = "tourManagerPlayUntil";
 
 /**
  * web_tour only resumes a manual tour after a page load when the user is in
@@ -56,8 +58,10 @@ export class TourReplayPlugin extends Plugin {
      * @param {boolean} [options.check] whether to check the tour: play it automatically
      * @param {boolean} [options.autoStart] whether the tour starts by itself
      *  (without `url`, it starts on the current page)
+     * @param {number} [options.playUntil] play only this number of steps,
+     *  automatically, to reach the step after
      */
-    startReplay(name, { url, rainbowManMessage, check = false, autoStart = false }) {
+    startReplay(name, { url, rainbowManMessage, check = false, autoStart = false, playUntil }) {
         // startTour() switches the user to onboarding mode unless it's already on.
         this.tour.toursEnabled = true;
         return this.tour.startTour(name, {
@@ -69,6 +73,7 @@ export class TourReplayPlugin extends Plugin {
             // element of each step the same way as for a user.
             ...(check && { robot: true, [CHECK_CONFIG_KEY]: true }),
             ...(autoStart && { [AUTO_START_CONFIG_KEY]: true }),
+            ...(Number.isInteger(playUntil) && { robot: true, [PLAY_UNTIL_CONFIG_KEY]: playUntil }),
         });
     }
 }

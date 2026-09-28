@@ -1,4 +1,4 @@
-import { click } from "@odoo/hoot-dom";
+import { click, waitFor } from "@odoo/hoot-dom";
 import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
 import { _t } from "@web/core/l10n/translation";
 import { patch } from "@web/core/utils/patch";
@@ -15,6 +15,13 @@ const BACKWARD_DELAY = 1000;
 const REPLAY_CONFIG_KEY = "tourManagerReplay";
 const CHECK_CONFIG_KEY = "tourManagerCheck";
 const AUTO_START_CONFIG_KEY = "tourManagerAutoStart";
+const PLAY_UNTIL_CONFIG_KEY = "tourManagerPlayUntil";
+// Same as in tour_creator_state.js and tour_creator.js
+const TOUR_CREATOR_KEY = "tour_manager.tour_creator";
+const PRELUDE_DONE_EVENT = "tour_manager:prelude-done";
+
+/** Event of the hint of an info step being clicked, to go on. */
+const NEXT_EVENT = "tour_manager:next";
 const CHECK_RESULT_KEY = "tour_manager.check_result";
 const CHECK_DONE_EVENT = "tour_manager:check-done";
 
@@ -63,14 +70,37 @@ patch(TourInteractive.prototype, {
 
     start(env) {
         super.start(...arguments);
-        if (this.isReplay) {
-            this.env = env;
+        this.env = env;
+        // Not while reaching a step to record from: the recorder waits for it
+        if (this.isReplay && !this.isPrelude) {
             this.addLeaveGuard();
         }
     },
 
+    /**
+     * Whether the tour is played automatically only to reach one of its steps
+     * (e.g. to record new steps from there): the steps before are played, and
+     * the tour stops before it.
+     */
+    get isPrelude() {
+        return Number.isInteger(this.config[PLAY_UNTIL_CONFIG_KEY]);
+    },
+
     play() {
+        if (this.isPrelude && this.hasReachedPlayUntil()) {
+            this.endPrelude({ reached: true });
+            return;
+        }
         const result = super.play(...arguments);
+        if (this.isPrelude && this.currentAction) {
+            clearTimeout(this.robotWatchdog);
+            const actionAtCall = this.currentAction;
+            this.robotWatchdog = setTimeout(() => {
+                if (this.currentAction === actionAtCall) {
+                    this.endPrelude({ reached: false, message: this.getFailureMessage(actionAtCall) });
+                }
+            }, CHECK_TIMEOUT);
+        }
         if (this.isCheck && this.currentAction) {
             // Replace the watchdog of robot mode, which only throws an error,
             // by one reporting which step failed and why.
@@ -86,6 +116,10 @@ patch(TourInteractive.prototype, {
     },
 
     async finish() {
+        if (this.isPrelude) {
+            this.endPrelude({ reached: true });
+            return;
+        }
         if (this.isCheck) {
             // All steps were done. The tour isn't marked as done for the user
             // who checks it, nor chained into the next onboarding tour.
@@ -221,23 +255,61 @@ patch(TourInteractive.prototype, {
      * @param {Object} action the action of a step that made no progress
      */
     failCheck(action) {
-        const step = action.step;
-        const stepNumber = this.steps.indexOf(step) + 1;
-        const reasons = step.error.length ? step.error : [_t("The step couldn't be done.")];
-        const hint = step.content ? ` (“${step.content}”)` : "";
         clearTimeout(this.robotWatchdog);
         this.stopReplay();
         this.saveCheckResult({
             passed: false,
-            step: stepNumber,
-            message: _t("Step %(step)s of %(count)s%(hint)s failed: %(reasons)s", {
-                step: stepNumber,
-                count: this.steps.length,
-                hint,
-                reasons: reasons.join(" "),
-            }),
+            step: this.steps.indexOf(action.step) + 1,
+            message: this.getFailureMessage(action),
         });
         this.reportCheck();
+    },
+
+    /**
+     * @param {Object} action the action of a step that made no progress
+     * @returns {string} which step failed and why
+     */
+    getFailureMessage(action) {
+        const step = action.step;
+        const reasons = step.error.length ? step.error : [_t("The step couldn't be done.")];
+        return _t("Step %(step)s of %(count)s%(hint)s failed: %(reasons)s", {
+            step: this.steps.indexOf(step) + 1,
+            count: this.steps.length,
+            hint: step.content ? ` (“${step.content}”)` : "",
+            reasons: reasons.join(" "),
+        });
+    },
+
+    //--------------------------------------------------------------------------
+    // Playing the steps before the one to reach
+    //--------------------------------------------------------------------------
+
+    /** Whether the next action to play belongs to the step to reach. */
+    hasReachedPlayUntil() {
+        const action = this.actions.at(this.currentActionIndex);
+        return (
+            this.currentActionIndex >= this.actions.length ||
+            this.steps.indexOf(action.step) >= this.config[PLAY_UNTIL_CONFIG_KEY]
+        );
+    },
+
+    /**
+     * Stops the tour and tells the tour creator, which waits for it, whether
+     * the step was reached. Also kept in its state in the browser, as it may
+     * not be listening yet (e.g. the page is loading).
+     *
+     * @param {{ reached: boolean, message?: string }} result
+     */
+    endPrelude(result) {
+        clearTimeout(this.robotWatchdog);
+        this.stopReplay();
+        const rawData = localStorage.getItem(TOUR_CREATOR_KEY);
+        if (rawData) {
+            const data = JSON.parse(rawData);
+            data.prelude = { ...data.prelude, ...result, done: true };
+            localStorage.setItem(TOUR_CREATOR_KEY, JSON.stringify(data));
+        }
+        window.dispatchEvent(new CustomEvent(PRELUDE_DONE_EVENT));
     },
 
     /**
@@ -310,13 +382,43 @@ patch(TourInteractive.prototype, {
     //--------------------------------------------------------------------------
 
     /**
+     * The hint of an info step (which has no action) is shown right away, and
+     * clicking it goes on with the tour.
+     */
+    updatePointer() {
+        super.updatePointer(...arguments);
+        const isInfoStep = this.custom && this.currentAction?.event === "next" && this.anchorEl;
+        if (isInfoStep) {
+            pointerState.content = [this.currentAction.content, _t("Click this message to continue.")]
+                .filter(Boolean)
+                .join(" ");
+            pointerState.onClick = this.goToNextStep;
+            if (this.infoStepShownFor !== this.anchorEl) {
+                this.infoStepShownFor = this.anchorEl;
+                const anchor = this.anchorEl;
+                // The pointer opens its hint when its element is hovered
+                setTimeout(() => anchor.dispatchEvent(new MouseEvent("mouseenter")), 300);
+            }
+        } else if (pointerState.onClick === this.goToNextStep) {
+            pointerState.onClick = undefined;
+        }
+    },
+
+    goToNextStep() {
+        document.dispatchEvent(new Event(NEXT_EVENT));
+    },
+
+    /**
      * Interactive tours skip the steps they can't wait for. Let custom tours
      * wait for the choice of an option in a select, and for typing in an editor.
      */
     getConsumeEventType(element, runCommand) {
         const consumeEvents = super.getConsumeEventType(...arguments);
         if (this.custom && element) {
-            if (runCommand === "select") {
+            if (runCommand === "next") {
+                // An info step: done when its hint is clicked
+                consumeEvents.push({ name: NEXT_EVENT, target: element.ownerDocument });
+            } else if (runCommand === "select") {
                 consumeEvents.push({ name: "change", target: element });
             } else if (runCommand === "editor") {
                 consumeEvents.push({
@@ -330,6 +432,16 @@ patch(TourInteractive.prototype, {
 });
 
 patch(TourStepInteractive.prototype, {
+    async doAction() {
+        if (this.tour.custom && this.run === "next") {
+            // An info step played automatically (e.g. by a check): go on
+            await waitFor(".o_tour_pointer", { timeout: this.timeout || 10000 });
+            document.dispatchEvent(new Event(NEXT_EVENT));
+            return;
+        }
+        return super.doAction(...arguments);
+    },
+
     get actions() {
         const actions = super.actions;
         if (this.tour.custom) {

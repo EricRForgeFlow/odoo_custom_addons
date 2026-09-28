@@ -16,6 +16,12 @@ const TOUR_CREATOR_LOCAL_STORAGE_KEY = "tour_manager.tour_creator";
  * @property {string} rainbow_man_message
  * @property {string} [icon]
  * @property {TourCreatorStep[]} steps
+ * @property {{ mode: "insert"|"pick", tourId: number, after: number, step: Object|null }} [edit]
+ *  editing an existing tour: inserting new steps after the first `after` ones,
+ *  or picking the element of `step` again
+ * @property {{ count: number, done?: boolean, reached?: boolean, message?: string }} [prelude]
+ *  the first `count` steps of the edited tour, played automatically first
+ * @property {boolean} [paused] whether the recording is paused
  */
 
 /**
