@@ -12,9 +12,7 @@ import { session } from "@web/session";
 import { ActionPlugin } from "@web/webclient/actions/action_plugin";
 import { tourState } from "@web_tour/tour_state";
 import { tourCreatorState } from "./tour_creator_state";
-
-const TOURS_ACTION = "tour_manager.web_tour_tour_action";
-const TOURS_MENU = "tour_manager.menu_tour_manager_root";
+import { forgetCurrentApp, openToursApp } from "./tours_app";
 
 /**
  * Shows the tour creator on every page load while a tour is being recorded.
@@ -68,31 +66,7 @@ export class TourCreatorPlugin extends Plugin {
         tourCreatorState.clear();
         this.removeTourCreator();
         this.removeTourCreator = () => {};
-        await this.discardFormChanges();
-        const menuService = this.env.services.menu;
-        const menu = menuService?.getAll().find((menu) => menu.xmlid === TOURS_MENU);
-        return this.action.doAction(TOURS_ACTION, {
-            clearBreadcrumbs: true,
-            additionalContext: context,
-            onActionReady: () => menu && menuService.setCurrentMenu(menu),
-        });
-    }
-
-    /**
-     * The record shown may have been changed while recording, to show how
-     * things are done, and may not even be valid (e.g. a quotation without
-     * customer), which would prevent leaving it: discard its unsaved changes.
-     */
-    async discardFormChanges() {
-        const discardButton = document.querySelector(".o_form_view .o_form_button_cancel");
-        if (!discardButton?.offsetParent) {
-            return;
-        }
-        discardButton.click();
-        const start = Date.now();
-        while (document.querySelector(".o_form_view .o_form_button_cancel") && Date.now() - start < 2000) {
-            await new Promise((resolve) => setTimeout(resolve, 50));
-        }
+        return openToursApp(this.action, this.env, context);
     }
 
     /**
@@ -125,5 +99,6 @@ services.add(TourCreatorPlugin);
 registry.category("actions").add("tour_manager.start_recording", (env, action) => {
     const { title, name, url, rainbow_man_message, icon } = action.params;
     tourCreatorState.set({ title, name, url, rainbow_man_message, icon, steps: [] });
+    forgetCurrentApp();
     browser.location.assign(url);
 });

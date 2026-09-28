@@ -22,10 +22,12 @@ and lets administrators record their own custom tours.
     'assets': {
         'web.assets_backend': [
             'tour_manager/static/src/tour_creator_state.js',
+            'tour_manager/static/src/tours_app.js',
             'tour_manager/static/src/tour_creator_plugin.js',
             'tour_manager/static/src/tour_creator.scss',
             'tour_manager/static/src/tour_replay/tour_replay_plugin.js',
             'tour_manager/static/src/tour_replay/tour_replay_action.js',
+            'tour_manager/static/src/tour_replay/tour_check.js',
             'tour_manager/static/src/views/**/*',
             'tour_manager/static/src/icon_picker/**/*',
         ],
