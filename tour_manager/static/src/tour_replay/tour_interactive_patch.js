@@ -89,12 +89,15 @@ patch(TourInteractive.prototype, {
             // All steps were done. The tour isn't marked as done for the user
             // who checks it, nor chained into the next onboarding tour.
             this.stopReplay();
-            // Let the page handle the last action (e.g. a line opened for edition)
-            await new Promise((resolve) => setTimeout(resolve, CHECK_SETTLE_DELAY));
-            this.reportCheck({
+            // Saved right away: the last action may reload the page (e.g.
+            // saving preferences), after which the Tours app shows the result.
+            this.saveCheckResult({
                 passed: true,
                 message: _t("All %s steps work.", this.steps.length),
             });
+            // Let the page handle the last action (e.g. a line opened for edition)
+            await new Promise((resolve) => setTimeout(resolve, CHECK_SETTLE_DELAY));
+            this.reportCheck();
             return;
         }
         this.removeLeaveGuard();
@@ -219,7 +222,7 @@ patch(TourInteractive.prototype, {
         const hint = step.content ? ` (“${step.content}”)` : "";
         clearTimeout(this.robotWatchdog);
         this.stopReplay();
-        this.reportCheck({
+        this.saveCheckResult({
             passed: false,
             step: stepNumber,
             message: _t("Step %(step)s of %(count)s%(hint)s failed: %(reasons)s", {
@@ -229,19 +232,29 @@ patch(TourInteractive.prototype, {
                 reasons: reasons.join(" "),
             }),
         });
+        this.reportCheck();
     },
 
     /**
-     * Hands the result over to the Tours app, which saves it. On a page where
-     * the Tours app can't handle it (e.g. of the website), go to the Tours
-     * app, which handles it when loaded.
+     * Keeps the result in the browser until the Tours app has shown it, as the
+     * page may be reloaded before (e.g. by the last action of the tour).
      *
      * @param {{ passed: boolean, message: string, step?: number }} result
      */
-    reportCheck(result) {
+    saveCheckResult(result) {
         localStorage.setItem(CHECK_RESULT_KEY, JSON.stringify({ name: this.name, ...result }));
-        window.dispatchEvent(new CustomEvent(CHECK_DONE_EVENT));
-        if (localStorage.getItem(CHECK_RESULT_KEY)) {
+    },
+
+    /**
+     * Tells the Tours app the check is done, so that it shows the result on
+     * the current screen. On a page without the Tours app (e.g. of the
+     * website), go to the Tours app, which shows it when loaded.
+     */
+    reportCheck() {
+        const handled = !window.dispatchEvent(new CustomEvent(CHECK_DONE_EVENT, { cancelable: true }));
+        if (!handled) {
+            const result = JSON.parse(localStorage.getItem(CHECK_RESULT_KEY) || "{}");
+            localStorage.setItem(CHECK_RESULT_KEY, JSON.stringify({ ...result, leftLastScreen: true }));
             window.location.assign("/odoo/tour_manager");
         }
     },

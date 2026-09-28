@@ -1,10 +1,29 @@
 /**
  * Selector computation adapted from web_tour's tour recorder
- * (web_tour/static/src/tour_recorder/tour_recorder.js), which does not export it.
+ * (web_tour/static/src/tour_recorder/tour_recorder.js), which does not export
+ * it, and made to skip the values generated when the page is rendered.
  */
 import { queryAll } from "@odoo/hoot-dom";
 
-const PRECISE_IDENTIFIERS = ["data-menu-xmlid", "name", "contenteditable"];
+const PRECISE_IDENTIFIERS = ["data-menu-xmlid", "data-menu", "name", "data-value", "contenteditable"];
+
+/**
+ * Values generated when the page is rendered, which change from one page load
+ * to another (e.g. the name of a group of radio buttons, numbered in the order
+ * the radio fields happen to be rendered): they can't identify an element.
+ */
+const GENERATED_VALUES = {
+    name: [/^radio_field_\d+$/],
+};
+
+/**
+ * @param {string} identifier an attribute of PRECISE_IDENTIFIERS
+ * @param {string} value
+ * @returns {boolean}
+ */
+function isGenerated(identifier, value) {
+    return (GENERATED_VALUES[identifier] || []).some((regex) => regex.test(value));
+}
 const ODOO_CLASS_REGEX = /^oe?(-|_)[\w-]+$/;
 
 /**
@@ -62,7 +81,7 @@ export function getShortestSelector(element) {
 
         for (const identifier of PRECISE_IDENTIFIERS) {
             const identifierValue = currentElem.getAttribute(identifier);
-            if (identifierValue) {
+            if (identifierValue && !isGenerated(identifier, identifierValue)) {
                 currentPredicate += `[${identifier}='${CSS.escape(identifierValue)}']`;
             }
         }
