@@ -46,8 +46,8 @@ class TestWebTourTour(TransactionCase):
 
     def test_save_check_result(self):
         Tour = self.env['web_tour.tour']
-        tour_id = Tour.tour_manager_save_check_result(self.tour.name, False, "Step 2 of 3 failed", 2)
-        self.assertEqual(tour_id, self.tour.id)
+        result = Tour.tour_manager_save_check_result(self.tour.name, False, "Step 2 of 3 failed", 2)
+        self.assertEqual(result, {'id': self.tour.id, 'message': "Step 2 of 3 failed"})
         self.assertEqual(self.tour.check_state, 'failed')
         self.assertEqual(self.tour.check_step, 2)
         self.assertEqual(self.tour.check_message, "Step 2 of 3 failed")
@@ -55,6 +55,13 @@ class TestWebTourTour(TransactionCase):
         Tour.tour_manager_save_check_result(self.tour.name, True, "All 3 steps work", 3)
         self.assertEqual(self.tour.check_state, 'passed')
         self.assertEqual(self.tour.check_step, 0)
+        # Failing after passing: the previous check may have changed the data
+        result = Tour.tour_manager_save_check_result(self.tour.name, False, "Step 2 of 3 failed.", 2)
+        self.assertIn("It passed the previous time it was checked", result['message'])
+        self.assertEqual(self.tour.check_message, result['message'])
+        # Failing again: nothing more to say
+        result = Tour.tour_manager_save_check_result(self.tour.name, False, "Step 2 of 3 failed.", 2)
+        self.assertEqual(result['message'], "Step 2 of 3 failed.")
 
     def test_check_failed_step(self):
         tour = self.env['web_tour.tour'].create({'name': 'tour_manager_checked_tour', 'custom': True, 'step_ids': [

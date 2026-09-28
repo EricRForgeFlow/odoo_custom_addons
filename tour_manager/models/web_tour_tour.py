@@ -202,16 +202,26 @@ class Web_TourTour(models.Model):
     def tour_manager_save_check_result(self, name, passed, message, step=0):
         """Save the result of the check of the tour named `name`.
 
-        :return: the id of the tour
+        :return: the id of the tour and the message saved, to show
+        :rtype: dict
         """
         tour = self.search([('name', '=', name)], limit=1)
+        if not passed and tour.check_state == 'passed':
+            # Checks perform the steps for real: the previous one may have
+            # changed the data the tour depends on (e.g. bookmarked a message
+            # the tour bookmarks)
+            message = self.env._(
+                "%(message)s It passed the previous time it was checked: the previous check may have "
+                "changed the data the tour depends on (checks perform the steps for real).",
+                message=message,
+            )
         tour.write({
             'check_state': 'passed' if passed else 'failed',
             'check_date': fields.Datetime.now(),
             'check_message': message,
             'check_step': 0 if passed else step,
         })
-        return tour.id
+        return {'id': tour.id, 'message': message}
 
     def action_start_tour(self):
         """Replay the tour, without switching the user to onboarding mode."""
