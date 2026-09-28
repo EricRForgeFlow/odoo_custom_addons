@@ -1,5 +1,5 @@
 import { animationFrame, click, queryFirst } from "@odoo/hoot-dom";
-import { Component, proxy, t, useListener, usePlugin, useProps } from "@odoo/owl";
+import { Component, onMounted, proxy, t, useListener, usePlugin, useProps } from "@odoo/owl";
 import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
 import { DialogPlugin } from "@web/core/dialog/dialog_plugin";
 import { _t } from "@web/core/l10n/translation";
@@ -48,6 +48,12 @@ const EDITABLE_SELECTOR = [
 
 /** Pointer events blocked on a clickable element so that its click is not performed. */
 const BLOCKED_EVENTS = ["pointerdown", "mousedown", "pointerup", "mouseup", "click", "dblclick"];
+
+/** Event of the steps of the tour edited being played, to reach the step to record from. */
+const PRELUDE_DONE_EVENT = "tour_manager:prelude-done";
+
+/** Class of the element hovered while picking an element. */
+const PICK_HOVER_CLASS = "o_tour_manager_pick_hover";
 
 /** Distance (px) the pointer must move after pressing a draggable element to start a drag. */
 const DRAG_THRESHOLD = 8;
@@ -123,6 +129,8 @@ export class TourCreator extends Component {
             editingLabel: "",
             pending: false,
             saving: false,
+            /** Kind of element being picked: "info" (an info step) or "step" (a step picked again) */
+            picking: null,
         });
         this.closeHintPopover = () => {};
         // Set while the recorder's own dialogs are open, so that their buttons work.
@@ -146,6 +154,44 @@ export class TourCreator extends Component {
         useListener(window, "change", (ev) => this.onChange(ev), { capture: true });
         useListener(window, "keydown", (ev) => this.onKeydown(ev), { capture: true });
         useListener(window, "focusout", (ev) => this.onFocusOut(ev), { capture: true });
+        useListener(window, "pointerover", (ev) => this.onPickHover(ev), { capture: true });
+        useListener(window, PRELUDE_DONE_EVENT, () => this.onPreludeDone());
+        onMounted(() => {
+            this.onPreludeDone();
+            this.armPickingOfStep();
+        });
+    }
+
+    /** The existing tour being edited, if any (see TourCreatorData.edit). */
+    get edit() {
+        return this.state.data.edit || null;
+    }
+
+    /** Whether the element of a step of the tour edited is picked again. */
+    get isPickMode() {
+        return this.edit?.mode === "pick";
+    }
+
+    /** Whether the steps before the one to record from are still being played. */
+    get isPlayingPrelude() {
+        const prelude = this.state.data.prelude;
+        return Boolean(prelude && !prelude.done);
+    }
+
+    /** Whether nothing is recorded: paused, or reaching the step to record from. */
+    get isInactive() {
+        return Boolean(this.state.data.paused) || this.isPlayingPrelude;
+    }
+
+    get title() {
+        const { title } = this.state.data;
+        if (this.edit?.mode === "pick") {
+            return _t("Pick the element of step %(step)s of “%(title)s”", { step: this.edit.step.number, title });
+        }
+        if (this.edit) {
+            return _t("Adding steps to “%(title)s” after step %(step)s", { title, step: this.edit.after });
+        }
+        return _t("Recording “%s”", title);
     }
 
     get steps() {
@@ -164,7 +210,7 @@ export class TourCreator extends Component {
      */
     getRecordableTarget(ev) {
         // Actions replayed by the recorder (through hoot) are not trusted.
-        if (!ev.isTrusted || this.state.saving || this.paused) {
+        if (!ev.isTrusted || this.state.saving || this.paused || this.isInactive) {
             return null;
         }
         const target = ev.composedPath()[0];
@@ -196,6 +242,14 @@ export class TourCreator extends Component {
         };
         if (this.state.pending) {
             block();
+            return;
+        }
+        if (this.state.picking) {
+            // The element picked is not clicked
+            block();
+            if (ev.type === "click") {
+                this.pickElement(target);
+            }
             return;
         }
         if (ev.type === "click" && Date.now() < this.ignoreClicksUntil) {
@@ -354,6 +408,140 @@ export class TourCreator extends Component {
         ) {
             this.commitEditing();
         }
+    }
+
+    //--------------------------------------------------------------------------
+    // Pausing, picking elements, reaching the step to record from
+    //--------------------------------------------------------------------------
+
+    togglePause() {
+        this.commitEditing(() => {
+            this.state.data.paused = !this.state.data.paused;
+            this.save();
+            this.armPickingOfStep();
+        });
+    }
+
+    /**
+     * @param {"info"|"step"} kind "info" to add an info step, "step" to pick
+     *  the element of the step edited again
+     */
+    startPicking(kind) {
+        this.commitEditing(() => {
+            this.state.picking = kind;
+        });
+    }
+
+    stopPicking() {
+        this.state.picking = null;
+        document.querySelector(`.${PICK_HOVER_CLASS}`)?.classList.remove(PICK_HOVER_CLASS);
+    }
+
+    /** When picking the element of a step again, picking starts right away. */
+    armPickingOfStep() {
+        if (this.edit?.mode === "pick" && !this.isInactive) {
+            this.startPicking("step");
+        } else if (this.edit?.mode === "pick") {
+            this.stopPicking();
+        }
+    }
+
+    /**
+     * @param {PointerEvent} ev
+     */
+    onPickHover(ev) {
+        if (!this.state.picking || this.state.pending) {
+            return;
+        }
+        const target = this.getRecordableTarget(ev);
+        document.querySelector(`.${PICK_HOVER_CLASS}`)?.classList.remove(PICK_HOVER_CLASS);
+        if (target) {
+            this.getPickableElement(target).classList.add(PICK_HOVER_CLASS);
+        }
+    }
+
+    /**
+     * @param {Element} target
+     * @returns {HTMLElement} the element to pick for a click on `target`
+     */
+    getPickableElement(target) {
+        return target.closest(EDITABLE_SELECTOR) || target.closest(CLICKABLE_SELECTOR) || target;
+    }
+
+    /**
+     * @param {Element} target
+     */
+    pickElement(target) {
+        const kind = this.state.picking;
+        const element = this.getPickableElement(target);
+        element.classList.remove(PICK_HOVER_CLASS);
+        const selector = getShortestSelector(element);
+        const label = this.getElementLabel(element);
+        if (kind === "info") {
+            this.openHintPopover(element, {
+                description: _t("Info step on: %s", label),
+                isUnique: isSelectorUnique(selector, element),
+                mode: "pick",
+                confirmLabel: _t("Add info step"),
+                onRecord: (hint) => {
+                    this.stopPicking();
+                    this.addSteps([{ trigger: selector, run: "next", ...hint }]);
+                },
+                onCancel: () => this.stopPicking(),
+            });
+            return;
+        }
+        const step = this.edit.step;
+        this.openHintPopover(element, {
+            description: _t("New element of step %(step)s: %(label)s", { step: step.number, label }),
+            isUnique: isSelectorUnique(selector, element),
+            mode: "pick",
+            confirmLabel: _t("Use this element"),
+            initialContent: step.content,
+            initialPosition: step.tooltip_position,
+            onRecord: async (hint) => {
+                this.stopPicking();
+                this.state.saving = true;
+                try {
+                    await this.orm.call("web_tour.tour.step", "tour_manager_update_target", [
+                        [step.id],
+                        selector,
+                        hint.content || "",
+                        hint.tooltip_position,
+                    ]);
+                } finally {
+                    this.state.saving = false;
+                }
+                this.props.onFinish(this.edit.tourId, this.state.data.title, { picked: step.number });
+            },
+            // Keep picking: another element can be picked
+            onCancel: () => {},
+        });
+    }
+
+    /**
+     * The steps of the tour edited were played (or not) to reach the step to
+     * record from: recording starts, or the user is asked to go there.
+     */
+    onPreludeDone() {
+        const stored = tourCreatorState.get();
+        const prelude = stored?.prelude;
+        if (!prelude?.done) {
+            return;
+        }
+        this.state.data.prelude = null;
+        if (!prelude.reached) {
+            this.state.data.paused = true;
+            this.notification.add(
+                _t(
+                    "The tour couldn't reach step %(step)s by itself: %(reason)s Go there yourself, then resume the recording.",
+                    { step: prelude.count + 1, reason: prelude.message || "" }
+                ),
+                { type: "warning", sticky: true }
+            );
+        }
+        this.save();
+        this.armPickingOfStep();
     }
 
     //--------------------------------------------------------------------------
@@ -575,7 +763,17 @@ export class TourCreator extends Component {
      * @param {(hint: { content?: string, tooltip_position: string }) => any} params.onRecord
      * @param {() => void} [params.onDone] called once the popover is closed, whatever the choice
      */
-    openHintPopover(anchor, { description, isUnique, mode, onRecord, onDone = () => {} }) {
+    openHintPopover(anchor, {
+        description,
+        isUnique,
+        mode,
+        onRecord,
+        onDone = () => {},
+        onCancel = () => {},
+        confirmLabel,
+        initialContent,
+        initialPosition,
+    }) {
         this.state.pending = true;
         const done = () => {
             this.closeHintPopover();
@@ -591,6 +789,9 @@ export class TourCreator extends Component {
                 description,
                 isUnique,
                 mode,
+                confirmLabel,
+                initialContent,
+                initialPosition,
                 onConfirm: async ({ content, tooltipPosition }) => {
                     done();
                     const hint = { tooltip_position: tooltipPosition };
@@ -607,6 +808,7 @@ export class TourCreator extends Component {
                 },
                 onDiscard: () => {
                     done();
+                    onCancel();
                     onDone();
                 },
             },
@@ -707,6 +909,9 @@ export class TourCreator extends Component {
     }
 
     async saveTour() {
+        if (this.edit) {
+            return this.saveInsertedSteps();
+        }
         if (!this.steps.length) {
             this.notification.add(_t("Record at least one step before finishing the tour."), {
                 type: "warning",
@@ -737,5 +942,26 @@ export class TourCreator extends Component {
         }
         this.closeHintPopover();
         this.props.onFinish(tourId, title);
+    }
+
+    /** Inserts the steps recorded in the tour edited. */
+    async saveInsertedSteps() {
+        if (!this.steps.length) {
+            this.notification.add(_t("Record at least one step before saving them."), { type: "warning" });
+            return;
+        }
+        this.state.saving = true;
+        let inserted;
+        try {
+            inserted = await this.orm.call("web_tour.tour", "tour_manager_insert_steps", [
+                [this.edit.tourId],
+                this.edit.after,
+                this.steps.map(({ group, ...step }) => step),
+            ]);
+        } finally {
+            this.state.saving = false;
+        }
+        this.closeHintPopover();
+        this.props.onFinish(this.edit.tourId, this.state.data.title, { inserted });
     }
 }

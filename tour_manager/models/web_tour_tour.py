@@ -180,6 +180,60 @@ class Web_TourTour(models.Model):
         tour_json['title'] = self.title or self.module_name or self.name
         return tour_json
 
+    def _get_ordered_steps(self):
+        """Return the steps of the tour, in the order they're played."""
+        self.ensure_one()
+        return self.step_ids.sorted(lambda step: (step.sequence, step.id))
+
+    def action_record_more(self):
+        """Record new steps at the end of the tour."""
+        self.ensure_one()
+        return self._get_edit_action('insert', len(self.step_ids))
+
+    def _get_edit_action(self, mode, play_until, step=None):
+        """Return the action editing the tour in the recorder.
+
+        :param str mode: 'insert' to record new steps after the first
+            `play_until` ones, or 'pick' to pick the element of `step` again
+        :param int play_until: number of steps played automatically first, to
+            reach the screen where the recording starts
+        :param step: the step whose element is picked again
+        """
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'tour_manager.edit_tour',
+            'params': {
+                'mode': mode,
+                'tour_id': self.id,
+                'name': self.name,
+                'title': self.display_name,
+                'url': self.url or '/odoo',
+                'play_until': play_until,
+                'step': step and {
+                    'id': step.id,
+                    'number': step.number,
+                    'content': step.content or '',
+                    'tooltip_position': step.tooltip_position or 'bottom',
+                },
+            },
+        }
+
+    def tour_manager_insert_steps(self, after, steps):
+        """Insert the recorded `steps` after the first `after` steps of the tour.
+
+        :param int after: number of steps to insert the new ones after
+        :param list steps: values of the new steps (trigger, run, content, tooltip_position)
+        :return: the number of steps inserted
+        """
+        self.ensure_one()
+        existing = self._get_ordered_steps()
+        new_steps = self.env['web_tour.tour.step'].create([{**values, 'tour_id': self.id} for values in steps])
+        ordered = existing[:after] + new_steps + existing[after:]
+        for sequence, step in enumerate(ordered, start=1):
+            step.sequence = sequence
+        return len(new_steps)
+
     def action_edit_tour(self):
         self.ensure_one()
         return {

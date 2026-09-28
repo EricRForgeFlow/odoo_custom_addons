@@ -2,28 +2,58 @@
 <templates xml:space="preserve">
     <t t-name="tour_manager.TourCreator">
         <div class="o_tour_manager_ui o_tour_manager_bar position-fixed top-0 start-50 translate-middle-x mt-1 d-flex align-items-center gap-2 px-2 py-1 rounded bg-dark text-white shadow">
-            <span class="o_tour_manager_recording_dot rounded-circle bg-danger" aria-hidden="true"/>
-            <span class="text-truncate" style="max-width: 16rem;">
-                Recording <strong t-out="this.state.data.title"/>
-            </span>
-            <span class="badge text-bg-light o_tour_manager_step_count">
-                <t t-out="this.steps.length"/> step(s)
-            </span>
-            <span t-if="this.state.editingLabel" class="fst-italic text-truncate o_tour_manager_editing" style="max-width: 12rem;">
-                Typing in <t t-out="this.state.editingLabel"/>…
-            </span>
-            <button class="btn btn-sm btn-outline-light o_tour_manager_undo" t-on-click="() => this.undo()"
-                    t-att-disabled="!this.steps.length or this.state.pending or this.state.saving"
-                    title="Remove the last recorded action. What it did on the page is not undone.">
-                <i class="oi me-1" data-icon="undo"/>Undo
-            </button>
+            <span class="o_tour_manager_recording_dot rounded-circle"
+                  t-att-class="this.isInactive ? 'bg-secondary o_tour_manager_inactive' : 'bg-danger'" aria-hidden="true"/>
+            <span class="text-truncate o_tour_manager_title" style="max-width: 20rem;" t-out="this.title"/>
+            <t t-if="this.isPlayingPrelude">
+                <span class="fst-italic o_tour_manager_prelude">
+                    <i class="oi oi-spin me-1" data-icon="autorenew"/>
+                    Playing steps 1 to <t t-out="this.state.data.prelude.count"/> to get there…
+                </span>
+            </t>
+            <t t-else="">
+                <span t-if="!this.isPickMode" class="badge text-bg-light o_tour_manager_step_count">
+                    <t t-out="this.steps.length"/> step(s)
+                </span>
+                <span t-if="this.state.data.paused" class="badge text-bg-warning o_tour_manager_paused">Paused</span>
+                <span t-if="this.state.editingLabel" class="fst-italic text-truncate o_tour_manager_editing" style="max-width: 12rem;">
+                    Typing in <t t-out="this.state.editingLabel"/>…
+                </span>
+                <span t-if="this.state.picking === 'info'" class="fst-italic o_tour_manager_picking">
+                    Click the element to explain
+                    <button class="btn btn-sm btn-link text-white p-0 ms-1 o_tour_manager_stop_picking"
+                            t-on-click="() => this.stopPicking()">(cancel)</button>
+                </span>
+                <span t-if="this.state.picking === 'step'" class="fst-italic o_tour_manager_picking">
+                    Click the new element of step <t t-out="this.edit.step.number"/>
+                </span>
+                <button class="btn btn-sm btn-outline-light o_tour_manager_pause" t-on-click="() => this.togglePause()"
+                        t-att-disabled="this.state.pending or this.state.saving"
+                        title="Pause or resume the recording of your actions, e.g. to go somewhere without recording it">
+                    <t t-if="this.state.data.paused"><i class="oi me-1" data-icon="play_arrow"/>Resume</t>
+                    <t t-else=""><i class="oi me-1" data-icon="pause"/>Pause</t>
+                </button>
+                <t t-if="!this.isPickMode">
+                    <button class="btn btn-sm btn-outline-light o_tour_manager_add_info" t-on-click="() => this.startPicking('info')"
+                            t-att-disabled="this.isInactive or this.state.pending or this.state.saving or this.state.picking"
+                            title="Add a step that only explains something: its hint is shown with a button to go on">
+                        <i class="oi me-1" data-icon="info"/>Add info
+                    </button>
+                    <button class="btn btn-sm btn-outline-light o_tour_manager_undo" t-on-click="() => this.undo()"
+                            t-att-disabled="!this.steps.length or this.state.pending or this.state.saving"
+                            title="Remove the last recorded action. What it did on the page is not undone.">
+                        <i class="oi me-1" data-icon="undo"/>Undo
+                    </button>
+                </t>
+            </t>
             <button class="btn btn-sm btn-outline-light o_tour_manager_cancel" t-on-click="() => this.cancel()"
                     t-att-disabled="this.state.saving">
                 Cancel
             </button>
-            <button class="btn btn-sm btn-primary o_tour_manager_finish" t-on-click="() => this.finish()"
-                    t-att-disabled="this.state.pending or this.state.saving">
-                <i class="oi me-1" data-icon="sports_score"/>Finish Tour
+            <button t-if="!this.isPickMode" class="btn btn-sm btn-primary o_tour_manager_finish" t-on-click="() => this.finish()"
+                    t-att-disabled="this.isPlayingPrelude or this.state.pending or this.state.saving">
+                <i class="oi me-1" data-icon="sports_score"/>
+                <t t-if="this.edit">Save Steps</t><t t-else="">Finish Tour</t>
             </button>
         </div>
     </t>

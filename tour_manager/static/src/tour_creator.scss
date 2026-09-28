@@ -18,3 +18,9 @@
         opacity: 0.3;
     }
 }
+
+.o_tour_manager_pick_hover {
+    outline: 2px dashed $info !important;
+    outline-offset: 2px;
+    cursor: crosshair !important;
+}

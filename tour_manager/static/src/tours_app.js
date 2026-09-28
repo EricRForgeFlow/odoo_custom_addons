@@ -57,6 +57,21 @@ export async function openToursApp(action, env, context = {}) {
 }
 
 /**
+ * Leaves the current screen (discarding its unsaved changes) for the form of
+ * a tour, in the Tours app.
+ *
+ * @param {import("@web/webclient/actions/action_plugin").ActionPlugin} action
+ * @param {Object} env
+ * @param {import("@web/core/orm_plugin").ORM} orm
+ * @param {number} tourId
+ */
+export async function openTourForm(action, env, orm, tourId) {
+    await openToursApp(action, env, { tour_manager_highlight_id: tourId });
+    const formAction = await orm.call("web_tour.tour", "action_edit_tour", [[tourId]]);
+    return action.doAction(formAction);
+}
+
+/**
  * Forgets the app remembered by the web client, before going to the starting
  * URL of a tour. The web client shows the app of the page's action, but falls
  * back to the remembered app when the action isn't in any menu of the user

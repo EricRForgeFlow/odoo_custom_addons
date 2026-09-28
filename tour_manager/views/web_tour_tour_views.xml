@@ -94,6 +94,9 @@
                 <header>
                     <button name="action_start_tour" type="object" string="Start" class="btn-primary"/>
                     <button name="action_check_tour" type="object" string="Check" confirm="Checking the tour performs all its steps for real, e.g. creating or changing records. Check it?"/>
+                    <button name="action_record_more" type="object" string="Record More Steps" invisible="not custom"
+                            confirm="The steps of the tour are played first, for real, to reach its end. Record new steps from there?"
+                            help="Play the tour to its end, then record new steps from there"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -130,10 +133,15 @@
                                 <list editable="bottom" decoration-danger="check_failed">
                                     <field name="check_failed" column_invisible="1"/>
                                     <field name="sequence" widget="handle"/>
+                                    <field name="number"/>
                                     <field name="trigger"/>
-                                    <field name="run"/>
+                                    <field name="run" help="What the step waits for: click, edit (typing), editor, select, drag_and_drop, or next (an info step, whose hint has to be clicked)"/>
                                     <field name="tooltip_position"/>
                                     <field name="content"/>
+                                    <button name="action_pick_element" type="object" icon="my_location" title="Pick element"
+                                            confirm="The steps before this one are played first, for real, to reach it. Pick its element again?"/>
+                                    <button name="action_record_after" type="object" icon="add_circle" title="Record steps after this one"
+                                            confirm="The steps up to this one are played first, for real, to reach it. Record new steps from there?"/>
                                 </list>
                             </field>
                         </page>
