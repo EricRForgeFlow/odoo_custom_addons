@@ -10,6 +10,8 @@
                 <field name="custom"/>
                 <field name="module_icon"/>
                 <field name="is_done"/>
+                <field name="check_state"/>
+                <field name="check_message"/>
                 <templates>
                     <t t-name="card" class="p-0">
                         <div t-attf-class="d-flex flex-row align-items-center gap-3 p-3 w-100 h-100 rounded #{record.custom.raw_value ? 'bg-info-subtle' : ''} #{record.id.raw_value === context.tour_manager_highlight_id ? 'border border-2 border-primary o_tour_manager_highlight' : ''}">
@@ -30,11 +32,20 @@
                                     <div class="text-muted"><field name="display_name"/></div>
                                 </t>
                                 <span t-if="record.is_done.raw_value" class="badge text-bg-success">Done</span>
+                                <span t-if="record.check_state.raw_value === 'failed'" class="badge text-bg-danger ms-1 o_tour_manager_check_failed"
+                                      t-att-title="record.check_message.raw_value">Check failed</span>
+                                <span t-elif="record.check_state.raw_value === 'passed'" class="badge border border-success text-success ms-1 o_tour_manager_check_passed"
+                                      t-att-title="record.check_message.raw_value">
+                                    <i class="oi" data-icon="check_circle"/> Checked
+                                </span>
                             </div>
                             <div class="d-flex flex-column gap-1">
                                 <button name="action_start_tour" type="object" class="btn btn-primary">Start</button>
                                 <button name="action_edit_tour" type="object" class="btn btn-secondary"
                                         invisible="not custom" groups="base.group_system">Edit</button>
+                                <button name="action_check_tour" type="object" class="btn btn-link btn-sm p-0"
+                                        groups="base.group_system" confirm="Checking the tour performs all its steps for real, e.g. creating or changing records. Check it?"
+                                        title="Play the tour automatically, to check that all its steps still work">Check</button>
                             </div>
                         </div>
                     </t>
@@ -53,7 +64,11 @@
                 <field name="display_name" string="Tour"/>
                 <field name="url" optional="hide"/>
                 <field name="is_done"/>
+                <field name="check_state" optional="show" decoration-danger="check_state == 'failed'" decoration-success="check_state == 'passed'" widget="badge"/>
+                <field name="check_date" optional="hide"/>
                 <button name="action_start_tour" type="object" string="Start" class="btn-link" icon="play_arrow"/>
+                <button name="action_check_tour" type="object" string="Check" class="btn-link" icon="check_circle"
+                        groups="base.group_system" confirm="Checking the tour performs all its steps for real, e.g. creating or changing records. Check it?"/>
                 <button name="action_edit_tour" type="object" string="Edit" class="btn-link" icon="edit"
                         invisible="not custom" groups="base.group_system"/>
             </list>
@@ -68,6 +83,7 @@
             <form create="0">
                 <header>
                     <button name="action_start_tour" type="object" string="Start" class="btn-primary"/>
+                    <button name="action_check_tour" type="object" string="Check" confirm="Checking the tour performs all its steps for real, e.g. creating or changing records. Check it?"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -85,10 +101,16 @@
                             <field name="custom" invisible="1"/>
                         </group>
                     </group>
+                    <group name="check" string="Last Check" invisible="not check_state">
+                        <field name="check_state" widget="badge" decoration-danger="check_state == 'failed'" decoration-success="check_state == 'passed'"/>
+                        <field name="check_date"/>
+                        <field name="check_message" class="text-break"/>
+                    </group>
                     <notebook>
                         <page name="steps" string="Steps">
                             <field name="step_ids">
-                                <list editable="bottom">
+                                <list editable="bottom" decoration-danger="check_failed">
+                                    <field name="check_failed" column_invisible="1"/>
                                     <field name="sequence" widget="handle"/>
                                     <field name="trigger"/>
                                     <field name="run"/>

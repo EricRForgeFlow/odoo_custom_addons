@@ -39,6 +39,35 @@ class TestWebTourTour(TransactionCase):
         self.tour.url = False
         self.assertEqual(self.tour.action_start_tour()['params']['url'], '/odoo')
 
+    def test_action_check_tour(self):
+        action = self.tour.action_check_tour()
+        self.assertEqual(action['tag'], 'tour_manager.check_tour')
+        self.assertEqual(action['params']['name'], 'tour_manager_test_tour')
+
+    def test_save_check_result(self):
+        Tour = self.env['web_tour.tour']
+        tour_id = Tour.tour_manager_save_check_result(self.tour.name, False, "Step 2 of 3 failed", 2)
+        self.assertEqual(tour_id, self.tour.id)
+        self.assertEqual(self.tour.check_state, 'failed')
+        self.assertEqual(self.tour.check_step, 2)
+        self.assertEqual(self.tour.check_message, "Step 2 of 3 failed")
+        self.assertTrue(self.tour.check_date)
+        Tour.tour_manager_save_check_result(self.tour.name, True, "All 3 steps work", 3)
+        self.assertEqual(self.tour.check_state, 'passed')
+        self.assertEqual(self.tour.check_step, 0)
+
+    def test_check_failed_step(self):
+        tour = self.env['web_tour.tour'].create({'name': 'tour_manager_checked_tour', 'custom': True, 'step_ids': [
+            (0, 0, {'sequence': 10, 'trigger': '.first', 'run': 'click'}),
+            (0, 0, {'sequence': 20, 'trigger': '.second', 'run': 'click'}),
+        ]})
+        first, second = tour.step_ids.sorted('sequence')
+        self.assertFalse(any((first | second).mapped('check_failed')))
+        tour.tour_manager_save_check_result(tour.name, False, "Step 2 of 2 failed", 2)
+        self.assertEqual((first.check_failed, second.check_failed), (False, True))
+        tour.tour_manager_save_check_result(tour.name, True, "All 2 steps work", 2)
+        self.assertFalse(second.check_failed)
+
     def test_display_name(self):
         tour = self.env['web_tour.tour'].create({'name': 'tour_manager_custom_tour', 'custom': True})
         self.assertEqual(tour.display_name, 'tour_manager_custom_tour')

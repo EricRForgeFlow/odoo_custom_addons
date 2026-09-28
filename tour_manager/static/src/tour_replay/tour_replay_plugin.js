@@ -10,6 +10,7 @@ import { tourState } from "@web_tour/tour_state";
  */
 // Also defined in tour_interactive_patch.js.
 export const REPLAY_CONFIG_KEY = "tourManagerReplay";
+export const CHECK_CONFIG_KEY = "tourManagerCheck";
 
 /**
  * web_tour only resumes a manual tour after a page load when the user is in
@@ -43,8 +44,9 @@ export class TourReplayPlugin extends Plugin {
      * @param {Object} options
      * @param {string} options.url
      * @param {string} [options.rainbowManMessage]
+     * @param {boolean} [options.check] whether to check the tour: play it automatically
      */
-    startReplay(name, { url, rainbowManMessage }) {
+    startReplay(name, { url, rainbowManMessage, check = false }) {
         // startTour() switches the user to onboarding mode unless it's already on.
         this.tour.toursEnabled = true;
         return this.tour.startTour(name, {
@@ -52,6 +54,9 @@ export class TourReplayPlugin extends Plugin {
             url,
             rainbowManMessage,
             [REPLAY_CONFIG_KEY]: true,
+            // A check plays the tour automatically ("robot" mode), finding the
+            // element of each step the same way as for a user.
+            ...(check && { robot: true, [CHECK_CONFIG_KEY]: true }),
         });
     }
 }

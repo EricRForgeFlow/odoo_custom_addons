@@ -10,9 +10,17 @@ import { tourState } from "@web_tour/tour_state";
 /** Time (ms) a tour waits for a vanished element to come back before going back a step. */
 const BACKWARD_DELAY = 1000;
 
-// Same as REPLAY_CONFIG_KEY in tour_replay_plugin.js, which isn't imported so
-// that this bundle keeps working where the plugin isn't loaded (unit tests).
+// Same as in tour_replay_plugin.js and tour_check.js, which aren't imported so
+// that this bundle keeps working where they aren't loaded (unit tests).
 const REPLAY_CONFIG_KEY = "tourManagerReplay";
+const CHECK_CONFIG_KEY = "tourManagerCheck";
+const CHECK_RESULT_KEY = "tour_manager.check_result";
+const CHECK_DONE_EVENT = "tour_manager:check-done";
+
+/** Time (ms) a check waits for a step to be done before failing. */
+const CHECK_TIMEOUT = 10000;
+/** Time (ms) a passed check lets the page handle the last action before leaving it. */
+const CHECK_SETTLE_DELAY = 1000;
 
 /** Elements whose click, during a replay, leaves the tour unless it's the current step. */
 const CLICKABLE_SELECTOR = [
@@ -42,6 +50,11 @@ patch(TourInteractive.prototype, {
         return Boolean(this.config[REPLAY_CONFIG_KEY]);
     },
 
+    /** Whether the tour is checked: played automatically, to check its steps. */
+    get isCheck() {
+        return Boolean(this.config[CHECK_CONFIG_KEY]);
+    },
+
     /** Whether the tour is managed by the Tours app: a replay, or a custom tour. */
     get isManaged() {
         return this.isReplay || Boolean(this.custom);
@@ -55,7 +68,35 @@ patch(TourInteractive.prototype, {
         }
     },
 
+    play() {
+        const result = super.play(...arguments);
+        if (this.isCheck && this.currentAction) {
+            // Replace the watchdog of robot mode, which only throws an error,
+            // by one reporting which step failed and why.
+            clearTimeout(this.robotWatchdog);
+            const actionAtCall = this.currentAction;
+            this.robotWatchdog = setTimeout(() => {
+                if (this.currentAction === actionAtCall) {
+                    this.failCheck(actionAtCall);
+                }
+            }, CHECK_TIMEOUT);
+        }
+        return result;
+    },
+
     async finish() {
+        if (this.isCheck) {
+            // All steps were done. The tour isn't marked as done for the user
+            // who checks it, nor chained into the next onboarding tour.
+            this.stopReplay();
+            // Let the page handle the last action (e.g. a line opened for edition)
+            await new Promise((resolve) => setTimeout(resolve, CHECK_SETTLE_DELAY));
+            this.reportCheck({
+                passed: true,
+                message: _t("All %s steps work.", this.steps.length),
+            });
+            return;
+        }
         this.removeLeaveGuard();
         if (this.isReplay) {
             // A replay doesn't chain into the next onboarding tour.
@@ -162,6 +203,47 @@ patch(TourInteractive.prototype, {
             },
             { onClose: () => (this.leaveDialogOpen = false) }
         );
+    },
+
+    //--------------------------------------------------------------------------
+    // Checking a tour
+    //--------------------------------------------------------------------------
+
+    /**
+     * @param {Object} action the action of a step that made no progress
+     */
+    failCheck(action) {
+        const step = action.step;
+        const stepNumber = this.steps.indexOf(step) + 1;
+        const reasons = step.error.length ? step.error : [_t("The step couldn't be done.")];
+        const hint = step.content ? ` (“${step.content}”)` : "";
+        clearTimeout(this.robotWatchdog);
+        this.stopReplay();
+        this.reportCheck({
+            passed: false,
+            step: stepNumber,
+            message: _t("Step %(step)s of %(count)s%(hint)s failed: %(reasons)s", {
+                step: stepNumber,
+                count: this.steps.length,
+                hint,
+                reasons: reasons.join(" "),
+            }),
+        });
+    },
+
+    /**
+     * Hands the result over to the Tours app, which saves it. On a page where
+     * the Tours app can't handle it (e.g. of the website), go to the Tours
+     * app, which handles it when loaded.
+     *
+     * @param {{ passed: boolean, message: string, step?: number }} result
+     */
+    reportCheck(result) {
+        localStorage.setItem(CHECK_RESULT_KEY, JSON.stringify({ name: this.name, ...result }));
+        window.dispatchEvent(new CustomEvent(CHECK_DONE_EVENT));
+        if (localStorage.getItem(CHECK_RESULT_KEY)) {
+            window.location.assign("/odoo/tour_manager");
+        }
     },
 
     /** Stops the tour for good, as if it had never been started. */

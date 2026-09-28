@@ -12,6 +12,15 @@ class Web_TourTour(models.Model):
     module_name = fields.Char(string="App", compute='_compute_module_info', store=True, readonly=True)
     module_icon = fields.Char(compute='_compute_module_info', store=True, readonly=True)
     is_done = fields.Boolean(string="Done", compute='_compute_is_done')
+    # Result of the last check, which plays the tour automatically
+    check_state = fields.Selection(
+        selection=[('passed', "Passed"), ('failed', "Failed")],
+        string="Last Check",
+        readonly=True,
+    )
+    check_date = fields.Datetime(string="Checked On", readonly=True)
+    check_message = fields.Text(string="Check Result", readonly=True)
+    check_step = fields.Integer(string="Failed Step", readonly=True, help="Number of the step the last check failed at.")
     title = fields.Char(help="Name shown in the Tours app instead of the technical name.")
     icon = fields.Char(
         help="Icon shown in the Tours app: an icon of Odoo's icon set (prefixed by \"oi:\") "
@@ -82,6 +91,28 @@ class Web_TourTour(models.Model):
             'views': [(self.env.ref('tour_manager.web_tour_tour_view_form').id, 'form')],
             'target': 'current',
         }
+
+    def action_check_tour(self):
+        """Play the tour automatically, to check that all its steps still work."""
+        self.ensure_one()
+        action = self.action_start_tour()
+        action['tag'] = 'tour_manager.check_tour'
+        return action
+
+    @api.model
+    def tour_manager_save_check_result(self, name, passed, message, step=0):
+        """Save the result of the check of the tour named `name`.
+
+        :return: the id of the tour
+        """
+        tour = self.search([('name', '=', name)], limit=1)
+        tour.write({
+            'check_state': 'passed' if passed else 'failed',
+            'check_date': fields.Datetime.now(),
+            'check_message': message,
+            'check_step': 0 if passed else step,
+        })
+        return tour.id
 
     def action_start_tour(self):
         """Replay the tour, without switching the user to onboarding mode."""
