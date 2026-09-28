@@ -14,6 +14,7 @@ const BACKWARD_DELAY = 1000;
 // that this bundle keeps working where they aren't loaded (unit tests).
 const REPLAY_CONFIG_KEY = "tourManagerReplay";
 const CHECK_CONFIG_KEY = "tourManagerCheck";
+const AUTO_START_CONFIG_KEY = "tourManagerAutoStart";
 const CHECK_RESULT_KEY = "tour_manager.check_result";
 const CHECK_DONE_EVENT = "tour_manager:check-done";
 
@@ -197,6 +198,10 @@ patch(TourInteractive.prototype, {
                 confirmLabel: _t("Leave tour"),
                 cancelLabel: _t("Stay in the tour"),
                 confirm: async () => {
+                    if (this.config[AUTO_START_CONFIG_KEY]) {
+                        // Leaving a tour that started by itself: don't start it again
+                        this.env.services.orm.silent.call("web_tour.tour", "tour_manager_dismiss", [this.name]);
+                    }
                     this.stopReplay();
                     if (clickable.isConnected) {
                         await click(clickable);

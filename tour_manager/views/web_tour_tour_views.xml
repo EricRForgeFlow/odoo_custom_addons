@@ -10,6 +10,7 @@
                 <field name="custom"/>
                 <field name="module_icon"/>
                 <field name="is_done"/>
+                <field name="auto_start"/>
                 <field name="check_state"/>
                 <field name="check_message"/>
                 <templates>
@@ -32,6 +33,13 @@
                                     <div class="text-muted"><field name="display_name"/></div>
                                 </t>
                                 <span t-if="record.is_done.raw_value" class="badge text-bg-success">Done</span>
+                                <span t-if="record.custom.raw_value and record.auto_start.raw_value" class="badge text-bg-primary ms-1 o_tour_manager_auto_start"
+                                      title="Starts by itself for its users who haven't done it yet">
+                                    <i class="oi" data-icon="play_circle"/> Automatic
+                                </span>
+                                <div groups="base.group_system" class="small text-muted mt-1 o_tour_manager_visible_to">
+                                    <field name="group_ids" widget="many2many_tags" invisible="not group_ids"/>
+                                </div>
                                 <span t-if="record.check_state.raw_value === 'failed'" class="badge text-bg-danger ms-1 o_tour_manager_check_failed"
                                       t-att-title="record.check_message.raw_value">Check failed</span>
                                 <span t-elif="record.check_state.raw_value === 'passed'" class="badge border border-success text-success ms-1 o_tour_manager_check_passed"
@@ -42,7 +50,7 @@
                             <div class="d-flex flex-column gap-1">
                                 <button name="action_start_tour" type="object" class="btn btn-primary">Start</button>
                                 <button name="action_edit_tour" type="object" class="btn btn-secondary"
-                                        invisible="not custom" groups="base.group_system">Edit</button>
+                                        groups="base.group_system">Edit</button>
                                 <button name="action_check_tour" type="object" class="btn btn-link btn-sm p-0"
                                         groups="base.group_system" confirm="Checking the tour performs all its steps for real, e.g. creating or changing records. Check it?"
                                         title="Play the tour automatically, to check that all its steps still work">Check</button>
@@ -63,6 +71,8 @@
                 <field name="module_name"/>
                 <field name="display_name" string="Tour"/>
                 <field name="url" optional="hide"/>
+                <field name="group_ids" widget="many2many_tags" optional="show" groups="base.group_system"/>
+                <field name="auto_start" optional="hide"/>
                 <field name="is_done"/>
                 <field name="check_state" optional="show" decoration-danger="check_state == 'failed'" decoration-success="check_state == 'passed'" widget="badge"/>
                 <field name="check_date" optional="hide"/>
@@ -70,7 +80,7 @@
                 <button name="action_check_tour" type="object" string="Check" class="btn-link" icon="check_circle"
                         groups="base.group_system" confirm="Checking the tour performs all its steps for real, e.g. creating or changing records. Check it?"/>
                 <button name="action_edit_tour" type="object" string="Edit" class="btn-link" icon="edit"
-                        invisible="not custom" groups="base.group_system"/>
+                        groups="base.group_system"/>
             </list>
         </field>
     </record>
@@ -92,14 +102,22 @@
                     </div>
                     <group>
                         <group>
-                            <field name="name" string="Technical Name"/>
-                            <field name="url"/>
+                            <field name="name" string="Technical Name" readonly="not custom"/>
+                            <field name="url" readonly="not custom"/>
                             <field name="icon" widget="tour_manager_icon_picker"/>
                         </group>
                         <group>
-                            <field name="sequence"/>
+                            <field name="sequence" readonly="not custom"/>
                             <field name="custom" invisible="1"/>
                         </group>
+                    </group>
+                    <group name="visibility" string="Visibility">
+                        <field name="group_ids" widget="many2many_tags" placeholder="Everyone"
+                               options="{'no_create': True}"/>
+                        <field name="auto_start" invisible="not custom"/>
+                        <div colspan="2" class="text-muted" invisible="custom">
+                            This onboarding tour of an app starts by itself for the users in onboarding mode who can see it.
+                        </div>
                     </group>
                     <group name="check" string="Last Check" invisible="not check_state">
                         <field name="check_state" widget="badge" decoration-danger="check_state == 'failed'" decoration-success="check_state == 'passed'"/>
@@ -107,7 +125,7 @@
                         <field name="check_message" class="text-break"/>
                     </group>
                     <notebook>
-                        <page name="steps" string="Steps">
+                        <page name="steps" string="Steps" invisible="not custom">
                             <field name="step_ids">
                                 <list editable="bottom" decoration-danger="check_failed">
                                     <field name="check_failed" column_invisible="1"/>
@@ -120,7 +138,7 @@
                             </field>
                         </page>
                         <page name="rainbow_man" string="Completion Message">
-                            <field name="rainbow_man_message" placeholder="Message shown when the tour is completed..."/>
+                            <field name="rainbow_man_message" placeholder="Message shown when the tour is completed..." readonly="not custom"/>
                         </page>
                     </notebook>
                 </sheet>
@@ -137,6 +155,10 @@
                 <field name="module_name"/>
                 <filter string="Onboarding" name="onboarding" domain="[('custom', '=', False)]"/>
                 <filter string="Custom" name="custom" domain="[('custom', '=', True)]"/>
+                <separator/>
+                <filter string="Starting Automatically" name="auto_start" domain="[('custom', '=', True), ('auto_start', '=', True)]"/>
+                <filter string="Restricted" name="restricted" domain="[('group_ids', '!=', False)]"
+                        help="Visible to some groups only"/>
                 <group>
                     <filter string="App" name="group_by_module_name" context="{'group_by': 'module_name'}"/>
                     <filter string="Type" name="group_by_custom" context="{'group_by': 'custom'}"/>
@@ -150,7 +172,7 @@
         <field name="res_model">web_tour.tour</field>
         <field name="path">tour_manager</field>
         <field name="view_mode">kanban,list</field>
-        <field name="domain" eval="False"/>
+        <field name="domain">[('is_visible', '=', True)]</field>
         <field name="search_view_id" ref="web_tour_tour_view_search"/>
         <field name="view_ids" eval="[
             Command.clear(),
