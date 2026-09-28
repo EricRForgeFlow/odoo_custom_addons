@@ -92,12 +92,12 @@ export class TourCheckPlugin extends Plugin {
         }
         this.processing = true;
         const { name, passed, message, step, leftLastScreen } = result;
-        const tourId = await this.orm.call("web_tour.tour", "tour_manager_save_check_result", [
-            name,
-            passed,
-            message,
-            step || 0,
-        ]);
+        // The server may complete the message, e.g. if the tour passed before
+        const { id: tourId, message: savedMessage } = await this.orm.call(
+            "web_tour.tour",
+            "tour_manager_save_check_result",
+            [name, passed, message, step || 0]
+        );
         browser.localStorage.setItem(CHECK_RESULT_KEY, JSON.stringify({ ...result, shownAt: Date.now() }));
         const title = passed ? _t("Check passed") : _t("Check failed");
         const onClose = () => {
@@ -105,14 +105,14 @@ export class TourCheckPlugin extends Plugin {
             this.processing = false;
         };
         if (leftLastScreen) {
-            this.dialog.add(AlertDialog, { title, body: message }, { onClose });
+            this.dialog.add(AlertDialog, { title, body: savedMessage }, { onClose });
             return;
         }
         this.dialog.add(
             ConfirmationDialog,
             {
                 title,
-                body: message,
+                body: savedMessage,
                 confirmLabel: _t("Back to Tours"),
                 confirm: () => openToursApp(this.action, this.env, { tour_manager_highlight_id: tourId }),
                 cancelLabel: _t("Stay here"),
