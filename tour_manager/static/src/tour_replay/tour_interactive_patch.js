@@ -26,8 +26,12 @@ const CLICKABLE_SELECTOR = [
     "[role='option']",
     ".dropdown-item",
     ".o_kanban_record",
+    ".o_data_cell",
     ".o_data_row",
 ].join(", ");
+
+/** Fields, in which a click only focuses them (what's typed in them makes the steps). */
+const EDITABLE_SELECTOR = "input:not([type='checkbox'], [type='radio']), textarea, select, [contenteditable='true']";
 
 /** Parts of the page that never leave the tour: the tour's own UI, notifications. */
 const IGNORED_SELECTOR = ".o_tour_pointer, .o_notification_manager";
@@ -98,6 +102,9 @@ patch(TourInteractive.prototype, {
         }
         const target = ev.composedPath()[0];
         if (!(target instanceof Element) || target.closest(IGNORED_SELECTOR)) {
+            return;
+        }
+        if (target.closest(EDITABLE_SELECTOR)) {
             return;
         }
         const clickable = target.closest(CLICKABLE_SELECTOR);

@@ -10,6 +10,9 @@ import { tourCreatorState } from "@tour_manager/tour_creator_state";
 import { HintPopover } from "./hint_popover";
 import { getShortestSelector, isSelectorUnique } from "./selector";
 
+/** Inputs whose click is recorded as a tour step, as it opens a menu or a picker. */
+const INPUT_CLICKABLE_SELECTOR = ".o_select_menu input, .o_datetime_input";
+
 /** Elements whose click is recorded as a tour step. */
 const CLICKABLE_SELECTOR = [
     "button",
@@ -26,10 +29,11 @@ const CLICKABLE_SELECTOR = [
     "input[type='checkbox']",
     "input[type='radio']",
     ".o_kanban_record",
+    // A cell of a list (e.g. to edit a line), rather than the whole line
+    ".o_data_cell",
     ".o_data_row",
     // Inputs opening a menu or a picker when clicked
-    ".o_select_menu input",
-    ".o_datetime_input",
+    INPUT_CLICKABLE_SELECTOR,
 ].join(", ");
 
 /** Elements that can be dragged (same as the ones tours know how to drag). */
@@ -59,6 +63,31 @@ const DRAG_THRESHOLD = 8;
 function formatRunArgument(value) {
     const text = value.replace(/\s+/g, " ").replaceAll("&&", "&").trim();
     return /^\(|\)$/.test(text) ? `(${text})` : text;
+}
+
+/**
+ * Returns the autocomplete in which typing in `element` searches: the one of
+ * the element itself, or the one of its field (e.g. the product of a sale
+ * order line, searched by typing its description in a textarea).
+ *
+ * @param {HTMLElement} element
+ * @returns {HTMLElement|null} the root of the autocomplete
+ */
+function getAutocompleteOf(element) {
+    return (
+        element.closest(".o-autocomplete") ||
+        element.closest(".o_field_widget")?.querySelector(".o-autocomplete") ||
+        null
+    );
+}
+
+/**
+ * @param {HTMLTableCellElement} cell a cell of a list
+ * @returns {string} the label of the column of `cell`
+ */
+function getColumnLabel(cell) {
+    const header = cell.closest("table")?.tHead?.rows[0]?.cells[cell.cellIndex];
+    return header?.innerText.trim() || cell.getAttribute("name") || "";
 }
 
 /**
@@ -200,7 +229,7 @@ export class TourCreator extends Component {
                 return;
             }
         }
-        const clickable = target.closest(CLICKABLE_SELECTOR);
+        const clickable = this.getClickable(target);
         if (this.passPointerEvents && ev.type !== "click" && ev.type !== "dblclick") {
             return;
         }
@@ -218,6 +247,21 @@ export class TourCreator extends Component {
             // Typing in a field ends when something else is clicked.
             this.commitEditing(() => clickable.isConnected && this.askClickHint(clickable));
         }
+    }
+
+    /**
+     * Returns the element whose click is to be recorded, if any. A click in a
+     * field is let through, to focus it: what's typed in it is recorded.
+     *
+     * @param {Element} target
+     * @returns {HTMLElement|null}
+     */
+    getClickable(target) {
+        const editable = target.closest(EDITABLE_SELECTOR);
+        if (editable && !editable.matches(INPUT_CLICKABLE_SELECTOR)) {
+            return null;
+        }
+        return target.closest(CLICKABLE_SELECTOR);
     }
 
     /**
@@ -245,7 +289,7 @@ export class TourCreator extends Component {
             element: editable,
             selector: getShortestSelector(editable),
             command: isEditor ? "editor" : "edit",
-            isAutocomplete: editable.classList.contains("o-autocomplete--input"),
+            isAutocomplete: Boolean(getAutocompleteOf(editable)),
         };
         this.state.editingLabel = this.getFieldLabel(editable);
     }
@@ -276,7 +320,7 @@ export class TourCreator extends Component {
         }
         if (editing.isAutocomplete) {
             const activeOption = queryFirst(".o-autocomplete--dropdown-item .ui-state-active", {
-                root: target.closest(".o-autocomplete"),
+                root: getAutocompleteOf(target),
             });
             if (activeOption) {
                 // Let the autocomplete select the option, then ask for the hint.
@@ -384,17 +428,18 @@ export class TourCreator extends Component {
      * @param {HTMLElement} option
      */
     async onAutocompleteOptionClick(option) {
-        const input = option.closest(".o-autocomplete")?.querySelector(".o-autocomplete--input");
+        const autocomplete = option.closest(".o-autocomplete");
+        const input = autocomplete?.querySelector(".o-autocomplete--input");
         if (!input) {
             return this.commitEditing(() => option.isConnected && this.askClickHint(option));
         }
-        const editing =
-            this.editing?.element === input
-                ? this.editing
-                : { element: input, selector: getShortestSelector(input) };
-        // Typing in the autocomplete is recorded along with the selection.
-        const typed = this.editing?.element === input ? input.value : "";
-        if (this.editing?.element === input) {
+        // Typing in the autocomplete (or in its field) is recorded along with
+        // the selection, as one step.
+        const typingInIt = this.editing && getAutocompleteOf(this.editing.element) === autocomplete;
+        const editing = typingInIt ? this.editing : { element: input, selector: getShortestSelector(input) };
+        const typed = typingInIt ? editing.element.value : "";
+        if (typingInIt) {
+            // Before the click, whose change of focus would record the typing alone
             this.stopEditing();
         }
         const label = option.textContent;
@@ -410,7 +455,7 @@ export class TourCreator extends Component {
      *  shows something else than what was typed), or after 2 seconds
      */
     async waitForAutocompleteSelection(input, typed) {
-        const root = input.closest(".o-autocomplete");
+        const root = getAutocompleteOf(input);
         const start = Date.now();
         do {
             await animationFrame();
@@ -579,6 +624,14 @@ export class TourCreator extends Component {
      * @returns {string}
      */
     getElementLabel(element) {
+        if (element.matches(".o_data_cell")) {
+            // Name the column of a cell: its content may be anything (or nothing)
+            const column = getColumnLabel(element);
+            const content = shorten(element.innerText || "", 40);
+            if (column) {
+                return content ? `${column} (${content})` : column;
+            }
+        }
         const label =
             element.getAttribute("aria-label") ||
             element.getAttribute("title") ||
@@ -593,8 +646,11 @@ export class TourCreator extends Component {
      */
     getFieldLabel(element) {
         const label = element.id && document.querySelector(`label[for="${CSS.escape(element.id)}"]`);
+        // In a list, a field is named by its column
+        const cell = element.closest(".o_data_cell");
         return shorten(
             label?.innerText ||
+                (cell && getColumnLabel(cell)) ||
                 element.getAttribute("aria-label") ||
                 element.getAttribute("placeholder") ||
                 element.closest("[name]")?.getAttribute("name") ||
