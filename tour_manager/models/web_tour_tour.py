@@ -1,7 +1,18 @@
+import json
+import re
+
+from lxml import etree
+
 from odoo import api, fields, models
-from odoo.fields import Domain
+from odoo.exceptions import UserError
+from odoo.fields import Command, Domain
 
 from odoo.addons.web.icons import search_icons
+
+# Format of the files tours are exported to, and imported from
+EXPORT_FORMAT = 'tour_manager'
+EXPORT_VERSION = 1
+TOOLTIP_POSITIONS = ('top', 'bottom', 'left', 'right')
 
 
 class Web_TourTour(models.Model):
@@ -233,6 +244,165 @@ class Web_TourTour(models.Model):
         for sequence, step in enumerate(ordered, start=1):
             step.sequence = sequence
         return len(new_steps)
+
+    # ------------------------------------------------------------------
+    # Export and import
+    # ------------------------------------------------------------------
+
+    def _tour_manager_export(self):
+        """Return the custom tours of `self` as data (e.g. to write them to a
+        JSON file): their definition and steps, and the groups they're visible
+        to by external ID, as ids differ from one database to another.
+
+        :rtype: list[dict]
+        """
+        group_xmlids = self.group_ids.get_external_id()
+        tours = []
+        for tour in self.filtered('custom'):
+            tours.append({
+                'name': tour.name,
+                'title': tour.title or None,
+                'url': tour.url or None,
+                'icon': tour.icon or None,
+                'rainbow_man_message': tour.rainbow_man_message or None,
+                'sequence': tour.sequence,
+                'auto_start': tour.auto_start,
+                'groups': [
+                    {'xmlid': group_xmlids.get(group.id) or None, 'name': group.full_name}
+                    for group in tour.group_ids
+                ],
+                'steps': [
+                    {
+                        'trigger': step.trigger,
+                        'run': step.run or None,
+                        'content': step.content or None,
+                        'tooltip_position': step.tooltip_position or 'bottom',
+                    }
+                    for step in tour._get_ordered_steps()
+                ],
+            })
+        return tours
+
+    def _tour_manager_export_json(self):
+        """:return: the custom tours of `self`, as the content of a JSON file"""
+        return json.dumps(
+            {'format': EXPORT_FORMAT, 'version': EXPORT_VERSION, 'tours': self._tour_manager_export()},
+            indent=2,
+            ensure_ascii=False,
+        )
+
+    def _tour_manager_export_xml(self):
+        """:return: the custom tours of `self`, as the content of an XML data
+        file to add to a module, loaded when the module is installed or updated.
+        Tours are not updated afterwards (noupdate), so that they can be edited
+        in the database."""
+        root = etree.Element('odoo', noupdate='1')
+        for tour_data in self._tour_manager_export():
+            xmlid = 'tour_' + re.sub(r'\W', '_', tour_data['name'])
+            record = etree.SubElement(root, 'record', id=xmlid, model='web_tour.tour')
+            for field_name in ('name', 'title', 'url', 'icon', 'rainbow_man_message'):
+                if tour_data[field_name]:
+                    etree.SubElement(record, 'field', name=field_name).text = tour_data[field_name]
+            etree.SubElement(record, 'field', name='sequence').text = str(tour_data['sequence'])
+            etree.SubElement(record, 'field', name='custom', eval='True')
+            etree.SubElement(record, 'field', name='auto_start', eval=str(bool(tour_data['auto_start'])))
+            group_refs = [f"ref({group['xmlid']!r})" for group in tour_data['groups'] if group['xmlid']]
+            for group in tour_data['groups']:
+                if not group['xmlid']:
+                    record.append(etree.Comment(f" Group {group['name']!r} has no external ID: not exported "))
+            if group_refs:
+                etree.SubElement(record, 'field', name='group_ids', eval=f"[Command.set([{', '.join(group_refs)}])]")
+            for number, step_data in enumerate(tour_data['steps'], start=1):
+                step = etree.SubElement(root, 'record', id=f'{xmlid}_step_{number}', model='web_tour.tour.step')
+                etree.SubElement(step, 'field', name='tour_id', ref=xmlid)
+                etree.SubElement(step, 'field', name='sequence').text = str(number)
+                for field_name in ('trigger', 'run', 'content', 'tooltip_position'):
+                    if step_data[field_name]:
+                        etree.SubElement(step, 'field', name=field_name).text = step_data[field_name]
+        return etree.tostring(root, pretty_print=True, xml_declaration=True, encoding='utf-8').decode()
+
+    @api.model
+    def _tour_manager_import(self, data, update_existing=True):
+        """Create (or update) the tours of `data`, as exported by `_tour_manager_export_json`.
+
+        Tours are matched by their technical name. The groups they're visible
+        to are matched by external ID, or else by name.
+
+        :param dict data: the content of an exported JSON file
+        :param bool update_existing: whether to update the existing tours (and
+            replace their steps), or to skip them
+        :return: the names of the tours created, updated and skipped, and warnings
+        :rtype: dict
+        """
+        if not isinstance(data, dict) or data.get('format') != EXPORT_FORMAT or not isinstance(data.get('tours'), list):
+            raise UserError(self.env._("This file doesn't contain tours exported from the Tours app."))
+        result = {'created': [], 'updated': [], 'skipped': [], 'warnings': []}
+        for tour_data in data['tours']:
+            name = tour_data.get('name') if isinstance(tour_data, dict) else None
+            steps_data = tour_data.get('steps') if isinstance(tour_data, dict) else None
+            if not name or not isinstance(steps_data, list):
+                raise UserError(self.env._("A tour of the file has no technical name or steps."))
+            existing = self.with_context(active_test=False).search([('name', '=', name)], limit=1)
+            if existing and not existing.custom:
+                result['skipped'].append(name)
+                result['warnings'].append(self.env._(
+                    "“%s” is the onboarding tour of an app: it wasn't changed.", name))
+                continue
+            if existing and not update_existing:
+                result['skipped'].append(name)
+                continue
+            values = {
+                'title': tour_data.get('title') or False,
+                'url': tour_data.get('url') or '/odoo',
+                'icon': tour_data.get('icon') or False,
+                'sequence': tour_data.get('sequence') or 1000,
+                'auto_start': bool(tour_data.get('auto_start')),
+                'custom': True,
+                'group_ids': [Command.set(self._tour_manager_find_groups(name, tour_data.get('groups') or [], result))],
+                'step_ids': [
+                    Command.create({
+                        'sequence': number,
+                        'trigger': step_data.get('trigger') or '',
+                        'run': step_data.get('run') or False,
+                        'content': step_data.get('content') or False,
+                        'tooltip_position': step_data.get('tooltip_position')
+                        if step_data.get('tooltip_position') in TOOLTIP_POSITIONS else 'bottom',
+                    })
+                    for number, step_data in enumerate(steps_data, start=1)
+                    if isinstance(step_data, dict)
+                ],
+            }
+            if tour_data.get('rainbow_man_message'):
+                values['rainbow_man_message'] = tour_data['rainbow_man_message']
+            if existing:
+                existing.step_ids.unlink()
+                existing.write({**values, 'active': True})
+                result['updated'].append(name)
+            else:
+                self.create({**values, 'name': name})
+                result['created'].append(name)
+        return result
+
+    @api.model
+    def _tour_manager_find_groups(self, tour_name, groups_data, result):
+        """:return: the ids of the groups of `groups_data` (see `_tour_manager_export`),
+        adding a warning to `result` for the ones not found"""
+        group_ids = []
+        for group_data in groups_data:
+            if not isinstance(group_data, dict):
+                continue
+            group = group_data.get('xmlid') and self.env.ref(group_data['xmlid'], raise_if_not_found=False)
+            if not (group and group._name == 'res.groups') and group_data.get('name'):
+                group = self.env['res.groups'].search([]).filtered(lambda g: g.full_name == group_data['name'])[:1]
+            if group:
+                group_ids.append(group.id)
+            else:
+                result['warnings'].append(self.env._(
+                    "The group “%(group)s” of “%(tour)s” doesn't exist here: the tour isn't visible to it.",
+                    group=group_data.get('name') or group_data.get('xmlid'),
+                    tour=tour_name,
+                ))
+        return group_ids
 
     def action_edit_tour(self):
         self.ensure_one()
