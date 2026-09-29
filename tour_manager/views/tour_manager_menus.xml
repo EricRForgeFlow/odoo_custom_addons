@@ -11,4 +11,18 @@
         parent="menu_tour_manager_root"
         action="web_tour_tour_action"
         sequence="10"/>
+
+    <menuitem id="menu_tour_manager_import"
+        name="Import"
+        parent="menu_tour_manager_root"
+        action="tour_import_wizard_action"
+        groups="base.group_system"
+        sequence="20"/>
+
+    <menuitem id="menu_tour_manager_export"
+        name="Export"
+        parent="menu_tour_manager_root"
+        action="tour_export_wizard_action"
+        groups="base.group_system"
+        sequence="30"/>
 </odoo>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="tour_export_wizard_view_form" model="ir.ui.view">
+        <field name="name">tour_manager.tour.export.wizard.view.form</field>
+        <field name="model">tour_manager.tour.export.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Export Tours">
+                <group>
+                    <field name="tour_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                    <field name="file_format" widget="radio"/>
+                </group>
+                <p class="text-muted" invisible="file_format != 'json'">
+                    Import the file in the Tours app of another database. The groups the tours are visible to
+                    are matched by their external ID; check results and who did the tours aren't exported.
+                </p>
+                <p class="text-muted" invisible="file_format != 'xml'">
+                    Add the file to the data files of a module (in its manifest): the tours are created when it's
+                    installed or updated, and can then be edited in the database. The module must depend on
+                    tour_manager.
+                </p>
+                <footer>
+                    <button name="action_export" type="object" string="Export" class="btn-primary"/>
+                    <button special="cancel" string="Close"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="tour_export_wizard_action" model="ir.actions.act_window">
+        <field name="name">Export Tours</field>
+        <field name="res_model">tour_manager.tour.export.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="web_tour.model_web_tour_tour"/>
+        <field name="binding_view_types">list</field>
+        <field name="group_ids" eval="[Command.set([ref('base.group_system')])]"/>
+    </record>
+
+    <record id="tour_import_wizard_view_form" model="ir.ui.view">
+        <field name="name">tour_manager.tour.import.wizard.view.form</field>
+        <field name="model">tour_manager.tour.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Import Tours">
+                <field name="state" invisible="1"/>
+                <group invisible="state != 'upload'">
+                    <field name="file" filename="filename" required="state == 'upload'"/>
+                    <field name="filename" invisible="1"/>
+                    <field name="update_existing"/>
+                </group>
+                <p class="text-muted" invisible="state != 'upload'">
+                    Import a JSON file exported from the Tours app. Tours are matched by their technical name.
+                </p>
+                <field name="summary" invisible="state != 'done'" class="text-break o_tour_manager_import_summary"/>
+                <footer>
+                    <button name="action_import" type="object" string="Import" class="btn-primary"
+                            invisible="state != 'upload'"/>
+                    <button name="action_open_tours" type="object" string="Open Tours" class="btn-primary"
+                            invisible="state != 'done'"/>
+                    <button special="cancel" string="Close"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="tour_import_wizard_action" model="ir.actions.act_window">
+        <field name="name">Import Tours</field>
+        <field name="res_model">tour_manager.tour.import.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

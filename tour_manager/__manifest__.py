@@ -16,6 +16,7 @@ and lets administrators record their own custom tours.
     'data': [
         'security/ir.access.csv',
         'wizard/tour_create_wizard_views.xml',
+        'wizard/tour_transfer_wizard_views.xml',
         'views/web_tour_tour_views.xml',
         'views/tour_manager_menus.xml',
     ],
