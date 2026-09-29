@@ -73,6 +73,10 @@ Odoo runs with `--dev=reload,qweb,werkzeug,xml,access`, so most Python and XML c
 picked up without restarting. Data and model changes still need a module update (`-u`, above),
 followed by `invoke restart`.
 
+Browser tests (`HttpCase` and tours, e.g. `tour_manager/tests/test_ui.py`) also run with
+`invoke test`. The image already includes Chromium and `websocket-client`, so they need no
+extra setup.
+
 For the IDE, open `doodba.odoo-sandbox-<version>.code-workspace` in the sandbox. It has the
 debugger configuration and path mappings for the container.
 
