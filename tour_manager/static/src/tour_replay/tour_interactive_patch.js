@@ -367,6 +367,12 @@ patch(TourInteractive.prototype, {
         clearTimeout(this.backwardTimeout);
         if (this.currentAction && this.anchorEl && !this.currentAction.findTrigger()) {
             this.backwardTimeout = setTimeout(() => {
+                if (document.body.classList.contains("pe-none")) {
+                    // Something is being dragged (e.g. a list row, moving the
+                    // other rows around): wait for the drop.
+                    this._onMutation();
+                    return;
+                }
                 super._onMutation();
                 if (this.anchorEl && !this.anchorEl.isConnected) {
                     pointerState.trigger = undefined;
@@ -414,6 +420,38 @@ patch(TourInteractive.prototype, {
      */
     getConsumeEventType(element, runCommand) {
         const consumeEvents = super.getConsumeEventType(...arguments);
+        if (this.custom && runCommand === "drop") {
+            // While dragging, Odoo disables the pointer events of the page,
+            // which hides the drop target from elementsFromPoint, used to check
+            // where the element is dropped: enable them for the check.
+            // Lists move a placeholder between their rows while dragging, which
+            // moves the rows around: a drop on a row counts anywhere in its list.
+            const list = element.closest(".o_data_row") && element.closest(".o_list_renderer");
+            for (const consumeEvent of consumeEvents) {
+                const conditional = consumeEvent.conditional;
+                if (conditional) {
+                    consumeEvent.conditional = (ev) => {
+                        const disabled = document.body.classList.contains("pe-none");
+                        document.body.classList.remove("pe-none");
+                        try {
+                            if (conditional(ev)) {
+                                return true;
+                            }
+                            const rect = list?.isConnected && list.getBoundingClientRect();
+                            return Boolean(
+                                rect &&
+                                ev.clientX >= rect.left && ev.clientX <= rect.right &&
+                                ev.clientY >= rect.top && ev.clientY <= rect.bottom
+                            );
+                        } finally {
+                            if (disabled) {
+                                document.body.classList.add("pe-none");
+                            }
+                        }
+                    };
+                }
+            }
+        }
         if (this.custom && element) {
             if (runCommand === "next") {
                 // An info step: done when its hint is clicked

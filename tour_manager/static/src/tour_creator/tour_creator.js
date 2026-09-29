@@ -276,6 +276,9 @@ export class TourCreator extends Component {
         if (ev.type === "pointerup" && this.drag) {
             const drag = this.drag;
             this.drag = null;
+            // Some draggable elements stop the pointer moves (e.g. the handles
+            // of list rows): compare where the pointer was pressed and released.
+            drag.dragging ||= Math.hypot(ev.clientX - drag.x, ev.clientY - drag.y) > DRAG_THRESHOLD;
             if (drag.dragging) {
                 this.passPointerEvents = false;
                 this.ignoreClicksUntil = Date.now() + 500;
@@ -717,27 +720,77 @@ export class TourCreator extends Component {
      * @param {PointerEvent} ev the pointerup event ending the drag
      */
     onDrop(drag, ev) {
-        // Find the element under the pointer, below the dragged element.
-        const dropElement = document
-            .elementsFromPoint(ev.clientX, ev.clientY)
-            .find((el) => !drag.element.contains(el) && !el.closest(".o_tour_manager_ui"));
+        // Find the element under the pointer, below the item moved (e.g. the
+        // row of a list, whose handle is dragged).
+        const movedItem = drag.element.closest(".o_data_row, .o_kanban_record") || drag.element;
+        // While dragging, Odoo disables the pointer events of the page, which
+        // hides its elements from elementsFromPoint: enable them for a moment.
+        const pointerEventsDisabled = document.body.classList.contains("pe-none");
+        document.body.classList.remove("pe-none");
+        const elementsUnderPointer = document.elementsFromPoint(ev.clientX, ev.clientY);
+        if (pointerEventsDisabled) {
+            document.body.classList.add("pe-none");
+        }
+        const dropElement = elementsUnderPointer
+            .find(
+                (el) =>
+                    !movedItem.contains(el) &&
+                    !el.closest(".o_tour_manager_ui, .o_dragged, .o_sortable_placeholder") &&
+                    el !== document.documentElement &&
+                    el !== document.body
+            );
         if (!dropElement) {
             return;
         }
         // Drop on the whole column or row, which the tour highlights while playing.
-        const dropTarget =
+        let dropTarget =
             dropElement.closest(".o_kanban_group") || dropElement.closest(".o_data_row") || dropElement;
-        const dropSelector = getShortestSelector(dropTarget);
+        let dropSelector;
+        const placeholder =
+            movedItem.matches(".o_data_row") &&
+            [...movedItem.parentElement.children].find((el) => el !== movedItem && el.style.visibility === "hidden");
+        if (placeholder) {
+            // Lists move a hidden placeholder where the row will be dropped, and
+            // the row stays where it was until then: drop it on the row next
+            // to the placeholder (as it is before the drag, without placeholder).
+            const isRow = (el) => el !== movedItem && el !== placeholder && el.matches(".o_data_row");
+            const siblings = [...placeholder.parentElement.children];
+            const index = siblings.indexOf(placeholder);
+            const neighbour =
+                siblings.slice(0, index).reverse().find(isRow) || siblings.slice(index + 1).find(isRow);
+            if (neighbour) {
+                const next = placeholder.nextSibling;
+                const parent = placeholder.parentElement;
+                placeholder.remove();
+                dropTarget = neighbour;
+                dropSelector = getShortestSelector(neighbour);
+                parent.insertBefore(placeholder, next);
+            }
+        }
+        const container = dropTarget.closest(".o_list_renderer, .o_kanban_renderer");
+        dropSelector ||= getShortestSelector(dropTarget) || (container && getShortestSelector(container));
+        if (!dropSelector) {
+            return;
+        }
         const label = this.getElementLabel(drag.element);
         // Let the drop happen before asking for the hint.
         setTimeout(async () => {
             await animationFrame();
-            const anchor = [dropTarget, drag.element].find((el) => el.isConnected);
-            if (!anchor) {
+            await animationFrame();
+            // The drop may render the elements again (e.g. the rows of a list,
+            // which would close the popover): anchor it to the whole list then,
+            // or look for the elements again, once the page is updated.
+            const list = dropTarget.matches(".o_data_row") && queryFirst(".o_list_renderer:has(.o_data_row)");
+            const getAnchor = () =>
+                [list, queryFirst(dropSelector), dropTarget, queryFirst(drag.selector), drag.element].find(
+                    (el) => el?.isConnected
+                );
+            if (!getAnchor()) {
                 return;
             }
             this.commitEditing(() =>
-                this.openHintPopover(anchor, {
+                getAnchor() &&
+                this.openHintPopover(getAnchor(), {
                     description: _t("Dragged: %s", label),
                     isUnique: drag.isUnique,
                     mode: "after",
@@ -774,6 +827,10 @@ export class TourCreator extends Component {
         initialContent,
         initialPosition,
     }) {
+        if (!anchor?.parentElement) {
+            // Removed in the meantime (e.g. rendered again)
+            anchor = document.querySelector(".o_action_manager") || document.body;
+        }
         this.state.pending = true;
         const done = () => {
             this.closeHintPopover();

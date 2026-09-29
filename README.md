@@ -32,6 +32,25 @@ added to the path once it has at least one module.
 
 VS Code launch configs for run, update and test are in `.vscode/launch.json`.
 
+### Browser tests
+
+Some tests drive a real browser (e.g. `tour_manager/tests/test_ui.py`). They need:
+
+- the `websocket-client` package in Odoo's virtualenv:
+
+  ```bash
+  uv pip install --python ../odoo/.venv/bin/python websocket-client
+  ```
+
+- Chrome or Chromium, found in the `PATH` (`google-chrome`, `chromium`, ...) or
+  given by `ODOO_BROWSER_BIN`, e.g. the Chromium downloaded by Playwright:
+
+  ```bash
+  export ODOO_BROWSER_BIN=$(ls -d ~/.cache/ms-playwright/chromium-*/chrome-linux*/chrome | head -1)
+  ```
+
+Without them, Odoo skips the browser tests.
+
 ## Code style
 
 `ruff.toml` extends Odoo's own `../odoo/ruff.toml`: `ruff check .` / `ruff format .`.
