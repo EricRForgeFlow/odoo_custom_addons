@@ -66,6 +66,9 @@ export class TourReplayPlugin extends Plugin {
         this.tour.toursEnabled = true;
         return this.tour.startTour(name, {
             mode: "manual",
+            // The tours of the Tours app are records (their steps may come from
+            // the registry, for the onboarding tours of apps)
+            fromDB: true,
             url,
             rainbowManMessage,
             [REPLAY_CONFIG_KEY]: true,

@@ -6,13 +6,26 @@ from lxml import etree
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 from odoo.fields import Command, Domain
+from odoo.tools import remove_accents
 
-from odoo.addons.web.icons import search_icons
+from odoo.addons.web.icons import ICONS
 
 # Format of the files tours are exported to, and imported from
 EXPORT_FORMAT = 'tour_manager'
 EXPORT_VERSION = 1
 TOOLTIP_POSITIONS = ('top', 'bottom', 'left', 'right')
+
+
+def _normalize_icon_text(text):
+    return remove_accents(text.casefold())
+
+
+# Name and English tags of Odoo's icons, to search them (as html_editor does,
+# which tour_manager doesn't depend on)
+ICONS_INDEX = [
+    (name, _normalize_icon_text(f"{name} {icon['tags']._source.replace('|', ' ')}"))
+    for name, icon in ICONS.items()
+]
 
 
 class Web_TourTour(models.Model):
@@ -115,7 +128,8 @@ class Web_TourTour(models.Model):
     def tour_manager_search_icons(self, needle=''):
         """Return the names of the icons of Odoo's icon set matching `needle`
         (all of them if it's empty), matched against their names and tags."""
-        return [name for name, _has_fill in search_icons(needle or '')]
+        terms = _normalize_icon_text(needle or '').split()
+        return [name for name, haystack in ICONS_INDEX if all(term in haystack for term in terms)]
 
     @api.model
     def tour_manager_get_app_icons(self):
