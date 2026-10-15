@@ -1,3 +1,4 @@
+import functools
 import json
 import re
 
@@ -6,9 +7,7 @@ from lxml import etree
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 from odoo.fields import Command, Domain
-from odoo.tools import remove_accents
-
-from odoo.addons.web.icons import ICONS
+from odoo.tools import file_open, remove_accents
 
 # Format of the files tours are exported to, and imported from
 EXPORT_FORMAT = 'tour_manager'
@@ -20,12 +19,17 @@ def _normalize_icon_text(text):
     return remove_accents(text.casefold())
 
 
-# Name and English tags of Odoo's icons, to search them (as html_editor does,
-# which tour_manager doesn't depend on)
-ICONS_INDEX = [
-    (name, _normalize_icon_text(f"{name} {icon['tags']._source.replace('|', ' ')}"))
-    for name, icon in ICONS.items()
-]
+# Stylesheet of Font Awesome, the icon set of Odoo's web client
+FONT_AWESOME_CSS = 'web/static/src/libs/fontawesome/css/font-awesome.css'
+
+
+@functools.cache
+def _get_icons_index():
+    """Return the names of the icons of Font Awesome, with the words they're
+    searched by. Font Awesome has no tags: icons are matched on their names."""
+    with file_open(FONT_AWESOME_CSS) as css:
+        names = sorted(set(re.findall(r'\.fa-([a-z0-9-]+):before', css.read())))
+    return [(name, _normalize_icon_text(name.replace('-', ' '))) for name in names]
 
 
 class Web_TourTour(models.Model):
@@ -46,6 +50,8 @@ class Web_TourTour(models.Model):
     check_date = fields.Datetime(string="Checked On", readonly=True)
     check_message = fields.Text(string="Check Result", readonly=True)
     check_step = fields.Integer(string="Failed Step", readonly=True, help="Number of the step the last check failed at.")
+    # Archived tours are hidden from the Tours app (web_tour has the field from 20.0)
+    active = fields.Boolean(default=True)
     title = fields.Char(help="Name shown in the Tours app instead of the technical name.")
     # Visibility: what users are shown in the Tours app and what starts by
     # itself, not a security barrier (tours are guidance, not sensitive data)
@@ -78,7 +84,7 @@ class Web_TourTour(models.Model):
         help="Whether the current user sees the tour in the Tours app. Administrators see all tours.",
     )
     icon = fields.Char(
-        help="Icon shown in the Tours app: an icon of Odoo's icon set (prefixed by \"oi:\") "
+        help="Icon shown in the Tours app: a Font Awesome icon (prefixed by \"fa:\") "
              "or the URL of an image, e.g. an app icon.",
     )
 
@@ -126,10 +132,10 @@ class Web_TourTour(models.Model):
 
     @api.model
     def tour_manager_search_icons(self, needle=''):
-        """Return the names of the icons of Odoo's icon set matching `needle`
-        (all of them if it's empty), matched against their names and tags."""
+        """Return the names of the Font Awesome icons matching `needle` (all of
+        them if it's empty), matched against the words of their names."""
         terms = _normalize_icon_text(needle or '').split()
-        return [name for name, haystack in ICONS_INDEX if all(term in haystack for term in terms)]
+        return [name for name, haystack in _get_icons_index() if all(term in haystack for term in terms)]
 
     @api.model
     def tour_manager_get_app_icons(self):
@@ -198,6 +204,14 @@ class Web_TourTour(models.Model):
         for fname in ('module', 'module_name', 'module_icon'):
             self.env.add_to_compute(self._fields[fname], records)
         return records
+
+    @api.model
+    def get_tour_json_by_name(self, tour_name):
+        # A tour may be removed or archived while it's replayed: web_tour fails
+        # on it in 19.0 (it returns False from 20.0)
+        if not self.search_count([('name', '=', tour_name)], limit=1):
+            return False
+        return super().get_tour_json_by_name(tour_name)
 
     def _get_tour_json(self):
         tour_json = super()._get_tour_json()

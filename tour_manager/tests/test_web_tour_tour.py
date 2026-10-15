@@ -89,8 +89,8 @@ class TestWebTourTour(TransactionCase):
     def test_search_icons(self):
         Tour = self.env['web_tour.tour']
         all_icons = Tour.tour_manager_search_icons()
-        self.assertIn('signpost', all_icons)
-        # Icons are also matched on their tags
+        self.assertIn('map-signs', all_icons)
+        # Icons are matched on the words of their names
         money_icons = Tour.tour_manager_search_icons('money')
         self.assertTrue(money_icons)
         self.assertLess(len(money_icons), len(all_icons))

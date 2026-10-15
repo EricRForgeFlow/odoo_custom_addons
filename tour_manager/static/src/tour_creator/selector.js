@@ -1,6 +1,6 @@
 /**
  * Selector computation adapted from web_tour's tour recorder
- * (web_tour/static/src/tour_recorder/tour_recorder.js), which does not export
+ * (web_tour/static/src/js/tour_recorder/tour_recorder.js), which does not export
  * it, and made to skip the values generated when the page is rendered.
  */
 import { queryAll } from "@odoo/hoot-dom";

@@ -8,11 +8,11 @@
                 element when it is played.
             </div>
             <label class="form-label fw-bold" for="tour_manager_hint">Hint</label>
-            <textarea id="tour_manager_hint" class="form-control mb-2" rows="3" t-ref="this.hintRef"
+            <textarea id="tour_manager_hint" class="form-control mb-2" rows="3" t-ref="hint"
                       placeholder="e.g. Click here to create a new quotation."
-                      t-model.proxy="this.state.content" t-on-keydown="this.onKeydown"/>
+                      t-model="state.content" t-on-keydown="(ev) => this.onKeydown(ev)"/>
             <label class="form-label fw-bold" for="tour_manager_position">Hint position</label>
-            <select id="tour_manager_position" class="form-select mb-3" t-model.proxy="this.state.tooltipPosition">
+            <select id="tour_manager_position" class="form-select mb-3" t-model="state.tooltipPosition">
                 <option value="bottom">Bottom</option>
                 <option value="top">Top</option>
                 <option value="right">Right</option>

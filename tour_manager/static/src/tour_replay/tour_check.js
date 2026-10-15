@@ -1,12 +1,8 @@
-import { onWillStart, Plugin, useListener, usePlugin, whenReady } from "@odoo/owl";
+import { whenReady } from "@odoo/owl";
 import { browser } from "@web/core/browser/browser";
 import { AlertDialog, ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
-import { DialogPlugin } from "@web/core/dialog/dialog_plugin";
 import { _t } from "@web/core/l10n/translation";
-import { ORM } from "@web/core/orm_plugin";
-import { services } from "@web/core/services";
-import { useEnv } from "@web/owl2/utils";
-import { ActionPlugin } from "@web/webclient/actions/action_plugin";
+import { registry } from "@web/core/registry";
 import { openToursApp } from "@tour_manager/tours_app";
 
 // Also defined in tour_interactive_patch.js, which reports the result.
@@ -28,23 +24,25 @@ const FIRST_SCREEN_TIMEOUT = 10000;
  * passed or failed, and shows it on the last screen of the tour (where it
  * failed, if it did), from where the user can go back to the Tours app.
  */
-export class TourCheckPlugin extends Plugin {
-    env = useEnv();
-    action = usePlugin(ActionPlugin);
-    dialog = usePlugin(DialogPlugin);
-    orm = usePlugin(ORM);
-
-    setup() {
+export class TourCheck {
+    /**
+     * @param {Object} env
+     * @param {Object} services
+     */
+    constructor(env, { action, dialog, orm }) {
+        this.env = env;
+        this.action = action;
+        this.dialog = dialog;
+        this.orm = orm;
         this.processing = false;
-        useListener(window, CHECK_DONE_EVENT, (ev) => {
+        browser.addEventListener(CHECK_DONE_EVENT, (ev) => {
             ev.preventDefault(); // handled: the tour doesn't need to go to the Tours app
             this.processCheckResult();
         });
         // A check whose result couldn't be shown yet: the page was reloaded
         // (e.g. by the last action of the tour), or the check ended on a page
         // without the Tours app (e.g. of the website), which came back to it.
-        onWillStart(async () => {
-            await whenReady();
+        whenReady(() => {
             if (browser.localStorage.getItem(CHECK_RESULT_KEY)) {
                 this.processCheckResultOnceLoaded();
             }
@@ -123,4 +121,9 @@ export class TourCheckPlugin extends Plugin {
     }
 }
 
-services.add(TourCheckPlugin);
+registry.category("services").add("tour_manager_check", {
+    dependencies: ["action", "dialog", "orm"],
+    start(env, services) {
+        return new TourCheck(env, services);
+    },
+});

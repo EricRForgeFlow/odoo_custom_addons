@@ -1,3 +1,4 @@
+import base64
 import json
 
 from odoo import fields, models
@@ -28,7 +29,7 @@ class TourManagerTourImportWizard(models.TransientModel):
                 "XML data files are loaded by the module they're added to, when it's installed or updated. "
                 "Import a JSON file here."))
         try:
-            data = json.loads(self.file.content)
+            data = json.loads(base64.b64decode(self.file))
         except ValueError as error:
             raise UserError(self.env._("This file isn't a valid JSON file: %s", error)) from error
         result = self.env['web_tour.tour']._tour_manager_import(data, update_existing=self.update_existing)

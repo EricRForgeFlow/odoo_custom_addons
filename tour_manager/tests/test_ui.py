@@ -152,7 +152,7 @@ class TestTourManagerUi(TourManagerBrowserCase):
             browser.wait_for(f'{rows} .o_row_handle')
             browser.wait_for(POINTER)
             browser.drag(f'{rows}:nth-child(1) .o_row_handle', f'{rows}:nth-child(3)')
-            browser.wait_until("localStorage.getItem('current_tour.index') === '2'",
+            browser.wait_until("localStorage.getItem('tour_manager.current_tour.index') === '2'",
                                message="the drop wasn't waited for")
             browser.click('div[name=rainbow_man_message] .odoo-editor-editable')
             browser.type("Bravo")
@@ -196,19 +196,22 @@ class TestTourManagerUi(TourManagerBrowserCase):
             browser.wait_for('.modal', "Leave the tour?")
             browser.click('.modal button', "Stay in the tour")
             browser.wait_for_absent('.modal')
-            self.assertEqual(browser.local_storage('current_tour'), 'tm_ui_leave')
+            self.assertEqual(browser.local_storage('tour_manager.current_tour'), 'tm_ui_leave')
             browser.click('.o_searchview_dropdown_toggler')
             browser.wait_for('.modal', "Leave the tour?")
             browser.click('.modal button', "Leave tour")
-            browser.wait_until("localStorage.getItem('current_tour') === null")
+            browser.wait_until("localStorage.getItem('tour_manager.current_tour') === null")
             browser.wait_for_absent(POINTER)
             # Stop Tour stops a replay for good
             self.card_button(browser, "Tm ui leave", 'action_start_tour')
             browser.wait_for(POINTER)
             browser.hover('.o_list_button_add')
+            # The pointer of 19.0 grows to show its content: click once it's open
+            browser.wait_until("document.querySelector('.o_tour_pointer.o_open')"
+                               "?.getAnimations({ subtree: true }).length === 0")
             browser.click('.o_tour_pointer_content button', "Stop Tour")
             browser.wait_for('.o_list_button_add')
-            browser.wait_until("localStorage.getItem('current_tour') === null")
+            browser.wait_until("localStorage.getItem('tour_manager.current_tour') === null")
 
     def test_visibility_and_auto_start(self):
         group = self.env['res.groups'].create({'name': "Tour Manager UI Group"})
@@ -223,7 +226,7 @@ class TestTourManagerUi(TourManagerBrowserCase):
                        group_ids=[(6, 0, group.ids)])
         with self.browser(login='tm_emma', path='/odoo/tour_manager') as browser:
             browser.wait_for('.o_kanban_record')
-            browser.wait_until("localStorage.getItem('current_tour') === 'tm_ui_welcome'")
+            browser.wait_until("localStorage.getItem('tour_manager.current_tour') === 'tm_ui_welcome'")
             self.assertTrue(browser.count('.o_kanban_record', "Tm ui welcome"))
             self.assertFalse(browser.count('.o_kanban_record', "Tm ui restricted"))
             # Leaving it dismisses it
@@ -231,10 +234,10 @@ class TestTourManagerUi(TourManagerBrowserCase):
             browser.click('.o_switch_view.o_list')
             browser.wait_for('.modal', "Leave the tour?")
             browser.click('.modal button', "Leave tour")
-            browser.wait_until("localStorage.getItem('current_tour') === null")
+            browser.wait_until("localStorage.getItem('tour_manager.current_tour') === null")
             browser.goto('/odoo/tour_manager')
             browser.wait_for('.o_kanban_record, .o_list_view')
-            browser.wait_until("localStorage.getItem('current_tour') === null")
+            browser.wait_until("localStorage.getItem('tour_manager.current_tour') === null")
         emma = self.env['res.users'].search([('login', '=', 'tm_emma')])
         self.assertIn(emma, welcome.user_dismissed_ids)
         self.assertFalse(emma.tour_enabled)
@@ -286,7 +289,7 @@ class TestTourManagerUi(TourManagerBrowserCase):
             browser.wait_until("document.querySelectorAll('.o_tour_manager_set_icon').length < 100")
             name = browser.evaluate("document.querySelector('.o_tour_manager_set_icon').dataset.name")
             browser.click('.o_tour_manager_set_icon')
-            browser.wait_for(f".modal .o_tour_manager_icon_preview i[data-icon='{name}']")
+            browser.wait_for(f".modal .o_tour_manager_icon_preview i[data-name='{name}']")
 
     def test_kanban_drag_and_drop(self):
         """Dragging a card to another column of a kanban (only when CRM is installed)."""

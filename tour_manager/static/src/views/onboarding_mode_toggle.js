@@ -1,10 +1,9 @@
-import { Component, onWillStart, proxy, usePlugin, useProps } from "@odoo/owl";
+import { Component, onWillStart, useState } from "@odoo/owl";
 import { browser } from "@web/core/browser/browser";
-import { DebugModePlugin } from "@web/core/debug_mode_plugin";
-import { ORM } from "@web/core/orm_plugin";
 import { user } from "@web/core/user";
-import { tourState } from "@web_tour/tour_state";
-import { REPLAY_CONFIG_KEY } from "@tour_manager/tour_replay/tour_replay_plugin";
+import { useService } from "@web/core/utils/hooks";
+import { tourState } from "@web_tour/js/tour_state";
+import { replayState } from "@tour_manager/tour_replay/replay_state";
 
 /**
  * Debug tool showing whether the user is in onboarding mode, in which the
@@ -13,16 +12,16 @@ import { REPLAY_CONFIG_KEY } from "@tour_manager/tour_replay/tour_replay_plugin"
  */
 export class OnboardingModeToggle extends Component {
     static template = "tour_manager.OnboardingModeToggle";
-    props = useProps({});
+    static props = {};
 
     setup() {
-        this.debug = usePlugin(DebugModePlugin);
-        this.orm = usePlugin(ORM);
-        this.state = proxy({ enabled: false });
-        this.currentTour = tourState.getCurrentTour();
-        this.isReplay = Boolean(tourState.getCurrentConfig()?.[REPLAY_CONFIG_KEY]);
+        this.orm = useService("orm");
+        this.state = useState({ enabled: false });
+        // Tours of the Tours app (replays) are played apart from web_tour's (see replay_state.js)
+        this.isReplay = Boolean(replayState.getCurrentTour());
+        this.currentTour = replayState.getCurrentTour() || tourState.getCurrentTour();
         onWillStart(async () => {
-            if (!this.debug.isActive()) {
+            if (!this.isDebug) {
                 return;
             }
             // Read from the server: the session may be outdated.
@@ -37,7 +36,12 @@ export class OnboardingModeToggle extends Component {
         browser.location.reload();
     }
 
+    get isDebug() {
+        return Boolean(this.env.debug);
+    }
+
     stopCurrentTour() {
+        replayState.clear();
         tourState.clear();
         browser.location.reload();
     }

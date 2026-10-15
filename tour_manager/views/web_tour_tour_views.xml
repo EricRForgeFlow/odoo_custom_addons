@@ -17,12 +17,12 @@
                     <t t-name="card" class="p-0">
                         <div t-attf-class="d-flex flex-row align-items-center gap-3 p-3 w-100 h-100 rounded #{record.custom.raw_value ? 'bg-info-subtle' : ''} #{record.id.raw_value === context.tour_manager_highlight_id ? 'border border-2 border-primary o_tour_manager_highlight' : ''}">
                             <t t-set="icon" t-value="record.icon.raw_value"/>
-                            <i t-if="icon and icon.startsWith('oi:')" class="oi text-info o_tour_manager_icon" style="font-size: 3rem;"
-                               t-att-data-icon="icon.slice(3)"/>
+                            <i t-if="icon and icon.startsWith('fa:')" t-attf-class="fa fa-{{ icon.slice(3) }} text-info o_tour_manager_icon"
+                               style="font-size: 3rem;" title="Icon"/>
                             <img t-elif="icon" t-att-src="icon" class="o_image_64_contain o_tour_manager_icon" alt="Icon"/>
                             <img t-elif="record.module_icon.raw_value" t-att-src="record.module_icon.raw_value"
                                  class="o_image_64_contain" alt="App icon"/>
-                            <i t-elif="record.custom.raw_value" class="oi text-info" style="font-size: 3rem;" data-icon="signpost" title="Custom tour"/>
+                            <i t-elif="record.custom.raw_value" class="fa fa-map-signs text-info" style="font-size: 3rem;" title="Custom tour"/>
                             <div class="flex-grow-1">
                                 <t t-if="record.custom.raw_value">
                                     <field name="display_name" class="fw-bold fs-5"/>
@@ -35,7 +35,7 @@
                                 <span t-if="record.is_done.raw_value" class="badge text-bg-success">Done</span>
                                 <span t-if="record.custom.raw_value and record.auto_start.raw_value" class="badge text-bg-primary ms-1 o_tour_manager_auto_start"
                                       title="Starts by itself for its users who haven't done it yet">
-                                    <i class="oi" data-icon="play_circle"/> Automatic
+                                    <i class="fa fa-play-circle"/> Automatic
                                 </span>
                                 <div groups="base.group_system" class="small text-muted mt-1 o_tour_manager_visible_to">
                                     <field name="group_ids" widget="many2many_tags" invisible="not group_ids"/>
@@ -44,7 +44,7 @@
                                       t-att-title="record.check_message.raw_value">Check failed</span>
                                 <span t-elif="record.check_state.raw_value === 'passed'" class="badge border border-success text-success ms-1 o_tour_manager_check_passed"
                                       t-att-title="record.check_message.raw_value">
-                                    <i class="oi" data-icon="check_circle"/> Checked
+                                    <i class="fa fa-check-circle"/> Checked
                                 </span>
                             </div>
                             <div class="d-flex flex-column gap-1">
@@ -76,10 +76,10 @@
                 <field name="is_done"/>
                 <field name="check_state" optional="show" decoration-danger="check_state == 'failed'" decoration-success="check_state == 'passed'" widget="badge"/>
                 <field name="check_date" optional="hide"/>
-                <button name="action_start_tour" type="object" string="Start" class="btn-link" icon="play_arrow"/>
-                <button name="action_check_tour" type="object" string="Check" class="btn-link" icon="check_circle"
+                <button name="action_start_tour" type="object" string="Start" class="btn-link" icon="fa-play"/>
+                <button name="action_check_tour" type="object" string="Check" class="btn-link" icon="fa-check-circle"
                         groups="base.group_system" confirm="Checking the tour performs all its steps for real, e.g. creating or changing records. Check it?"/>
-                <button name="action_edit_tour" type="object" string="Edit" class="btn-link" icon="edit"
+                <button name="action_edit_tour" type="object" string="Edit" class="btn-link" icon="fa-pencil"
                         groups="base.group_system"/>
             </list>
         </field>
@@ -138,9 +138,9 @@
                                     <field name="run" help="What the step waits for: click, edit (typing), editor, select, drag_and_drop, or next (an info step, whose hint has to be clicked)"/>
                                     <field name="tooltip_position"/>
                                     <field name="content"/>
-                                    <button name="action_pick_element" type="object" icon="my_location" title="Pick element"
+                                    <button name="action_pick_element" type="object" icon="fa-crosshairs" title="Pick element"
                                             confirm="The steps before this one are played first, for real, to reach it. Pick its element again?"/>
-                                    <button name="action_record_after" type="object" icon="add_circle" title="Record steps after this one"
+                                    <button name="action_record_after" type="object" icon="fa-plus-circle" title="Record steps after this one"
                                             confirm="The steps up to this one are played first, for real, to reach it. Record new steps from there?"/>
                                 </list>
                             </field>

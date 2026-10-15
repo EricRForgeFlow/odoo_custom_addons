@@ -1,17 +1,12 @@
-import { onWillStart, Plugin, usePlugin, whenReady } from "@odoo/owl";
+import { whenReady } from "@odoo/owl";
 import { loadBundle } from "@web/core/assets";
 import { browser } from "@web/core/browser/browser";
 import { _t } from "@web/core/l10n/translation";
-import { NotificationPlugin } from "@web/core/notifications/notification_plugin";
-import { ORM } from "@web/core/orm_plugin";
-import { OverlayPlugin } from "@web/core/overlay/overlay_plugin";
 import { registry } from "@web/core/registry";
-import { services } from "@web/core/services";
-import { useEnv } from "@web/owl2/utils";
 import { session } from "@web/session";
-import { ActionPlugin } from "@web/webclient/actions/action_plugin";
-import { tourState } from "@web_tour/tour_state";
-import { PLAY_UNTIL_CONFIG_KEY } from "./tour_replay/tour_replay_plugin";
+import { tourState } from "@web_tour/js/tour_state";
+import { replayState } from "./tour_replay/replay_state";
+import { PLAY_UNTIL_CONFIG_KEY } from "./tour_replay/tour_replay_service";
 import { tourCreatorState } from "./tour_creator_state";
 import { forgetCurrentApp, openTourForm, openToursApp } from "./tours_app";
 
@@ -19,24 +14,30 @@ import { forgetCurrentApp, openTourForm, openToursApp } from "./tours_app";
  * Shows the tour creator on every page load while a tour is being recorded.
  * The creator itself lives in a lazy bundle, only loaded when needed.
  */
-export class TourCreatorPlugin extends Plugin {
-    env = useEnv();
-    action = usePlugin(ActionPlugin);
-    notification = usePlugin(NotificationPlugin);
-    orm = usePlugin(ORM);
-    overlay = usePlugin(OverlayPlugin);
+export class TourCreatorService {
     removeTourCreator = () => {};
 
-    setup() {
+    /**
+     * @param {Object} env
+     * @param {Object} services
+     */
+    constructor(env, { action, notification, orm, overlay }) {
+        this.env = env;
+        this.action = action;
+        this.notification = notification;
+        this.orm = orm;
+        this.overlay = overlay;
         if (tourCreatorState.get()) {
             // Don't let onboarding tours start and get in the way while
-            // recording, but let the tour edited reach the step to record from.
+            // recording (web_tour's tour service reads them once the page is
+            // ready), but let the tour edited reach the step to record from.
             session.current_tour = false;
-            if (!Number.isInteger(tourState.getCurrentConfig()?.[PLAY_UNTIL_CONFIG_KEY])) {
-                tourState.clear();
+            tourState.clear();
+            if (!Number.isInteger(replayState.getCurrentConfig()?.[PLAY_UNTIL_CONFIG_KEY])) {
+                replayState.clear();
             }
         }
-        onWillStart(() => this.bootstrap());
+        this.bootstrap();
     }
 
     async bootstrap() {
@@ -113,7 +114,12 @@ export class TourCreatorPlugin extends Plugin {
     }
 }
 
-services.add(TourCreatorPlugin);
+registry.category("services").add("tour_manager_creator", {
+    dependencies: ["action", "notification", "orm", "overlay"],
+    start(env, services) {
+        return new TourCreatorService(env, services);
+    },
+});
 
 registry.category("actions").add("tour_manager.edit_tour", (env, action) => {
     const { mode, tour_id, name, title, url, play_until, step } = action.params;

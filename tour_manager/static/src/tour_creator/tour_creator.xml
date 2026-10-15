@@ -7,7 +7,7 @@
             <span class="text-truncate o_tour_manager_title" style="max-width: 20rem;" t-out="this.title"/>
             <t t-if="this.isPlayingPrelude">
                 <span class="fst-italic o_tour_manager_prelude">
-                    <i class="oi oi-spin me-1" data-icon="autorenew"/>
+                    <i class="fa fa-refresh fa-spin me-1"/>
                     Playing steps 1 to <t t-out="this.state.data.prelude.count"/> to get there…
                 </span>
             </t>
@@ -30,19 +30,19 @@
                 <button class="btn btn-sm btn-outline-light o_tour_manager_pause" t-on-click="() => this.togglePause()"
                         t-att-disabled="this.state.pending or this.state.saving"
                         title="Pause or resume the recording of your actions, e.g. to go somewhere without recording it">
-                    <t t-if="this.state.data.paused"><i class="oi me-1" data-icon="play_arrow"/>Resume</t>
-                    <t t-else=""><i class="oi me-1" data-icon="pause"/>Pause</t>
+                    <t t-if="this.state.data.paused"><i class="fa fa-play me-1"/>Resume</t>
+                    <t t-else=""><i class="fa fa-pause me-1"/>Pause</t>
                 </button>
                 <t t-if="!this.isPickMode">
                     <button class="btn btn-sm btn-outline-light o_tour_manager_add_info" t-on-click="() => this.startPicking('info')"
                             t-att-disabled="this.isInactive or this.state.pending or this.state.saving or this.state.picking"
                             title="Add a step that only explains something: its hint is shown with a button to go on">
-                        <i class="oi me-1" data-icon="info"/>Add info
+                        <i class="fa fa-info-circle me-1"/>Add info
                     </button>
                     <button class="btn btn-sm btn-outline-light o_tour_manager_undo" t-on-click="() => this.undo()"
                             t-att-disabled="!this.steps.length or this.state.pending or this.state.saving"
                             title="Remove the last recorded action. What it did on the page is not undone.">
-                        <i class="oi me-1" data-icon="undo"/>Undo
+                        <i class="fa fa-undo me-1"/>Undo
                     </button>
                 </t>
             </t>
@@ -52,7 +52,7 @@
             </button>
             <button t-if="!this.isPickMode" class="btn btn-sm btn-primary o_tour_manager_finish" t-on-click="() => this.finish()"
                     t-att-disabled="this.isPlayingPrelude or this.state.pending or this.state.saving">
-                <i class="oi me-1" data-icon="sports_score"/>
+                <i class="fa fa-flag-checkered me-1"/>
                 <t t-if="this.edit">Save Steps</t><t t-else="">Finish Tour</t>
             </button>
         </div>

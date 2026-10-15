@@ -1,9 +1,9 @@
+import base64
 import io
 import json
 
 from odoo.exceptions import UserError
 from odoo.tests import TransactionCase, tagged
-from odoo.tools.binary import BinaryBytes
 from odoo.tools.convert import convert_xml_import
 
 
@@ -19,7 +19,7 @@ class TestTourTransfer(TransactionCase):
             'title': "Transfer tour",
             'custom': True,
             'url': '/odoo/crm',
-            'icon': 'oi:rocket_launch',
+            'icon': 'fa:rocket',
             'sequence': 7,
             'auto_start': True,
             'rainbow_man_message': "<b>Well done!</b>",
@@ -39,7 +39,7 @@ class TestTourTransfer(TransactionCase):
         [data] = self._export()
         self.assertEqual(data['name'], 'tm_transfer_tour')
         self.assertEqual((data['title'], data['url'], data['icon'], data['sequence'], data['auto_start']),
-                         ("Transfer tour", '/odoo/crm', 'oi:rocket_launch', 7, True))
+                         ("Transfer tour", '/odoo/crm', 'fa:rocket', 7, True))
         self.assertEqual(data['groups'][0]['xmlid'], 'base.group_system')
         self.assertIsNone(data['groups'][1]['xmlid'])
         self.assertEqual([step['trigger'] for step in data['steps']],
@@ -118,13 +118,13 @@ class TestTourTransfer(TransactionCase):
         action = export.action_export()
         self.assertEqual(action['target'], 'download')
         self.assertEqual(export.filename, 'tm_transfer_tour.json')
-        content = export.file.content
+        content = base64.b64decode(export.file)
         self.tour.unlink()
         importer = self.env['tour_manager.tour.import.wizard'].create({
-            'file': BinaryBytes(content), 'filename': 'tm_transfer_tour.json'})
+            'file': base64.b64encode(content), 'filename': 'tm_transfer_tour.json'})
         importer.action_import()
         self.assertEqual(importer.state, 'done')
         self.assertIn("Created (1): tm_transfer_tour", importer.summary)
         with self.assertRaises(UserError):
             self.env['tour_manager.tour.import.wizard'].create({
-                'file': BinaryBytes(b'not json'), 'filename': 'tours.json'}).action_import()
+                'file': base64.b64encode(b'not json'), 'filename': 'tours.json'}).action_import()

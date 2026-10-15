@@ -3,13 +3,13 @@
     <t t-name="tour_manager.IconPickerField">
         <div class="d-flex align-items-center gap-2 o_tour_manager_icon_field">
             <span class="o_tour_manager_icon_preview d-inline-flex align-items-center justify-content-center">
-                <i t-if="this.iconName" class="oi fs-2" t-att-data-icon="this.iconName"/>
+                <i t-if="this.iconName" t-attf-class="fa fa-{{ this.iconName }} fs-2" t-att-data-name="this.iconName"/>
                 <img t-elif="this.value" t-att-src="this.value" alt="Icon" class="w-100 h-100"/>
-                <i t-else="" class="oi fs-2 text-muted" data-icon="signpost" title="Default icon"/>
+                <i t-else="" class="fa fa-map-signs fs-2 text-muted" title="Default icon"/>
             </span>
             <t t-if="!this.props.readonly">
                 <button type="button" class="btn btn-secondary btn-sm o_tour_manager_icon_choose"
-                        t-ref="this.buttonRef" t-on-click="() => this.open()">Choose</button>
+                        t-ref="button" t-on-click="() => this.open()">Choose</button>
                 <button t-if="this.value" type="button" class="btn btn-link btn-sm o_tour_manager_icon_clear"
                         t-on-click="() => this.clear()">Reset</button>
             </t>

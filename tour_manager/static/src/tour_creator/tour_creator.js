@@ -1,11 +1,8 @@
 import { animationFrame, click, queryFirst } from "@odoo/hoot-dom";
-import { Component, onMounted, proxy, t, useListener, usePlugin, useProps } from "@odoo/owl";
+import { Component, onMounted, useExternalListener, useState } from "@odoo/owl";
 import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
-import { DialogPlugin } from "@web/core/dialog/dialog_plugin";
 import { _t } from "@web/core/l10n/translation";
-import { NotificationPlugin } from "@web/core/notifications/notification_plugin";
-import { ORM } from "@web/core/orm_plugin";
-import { PopoverPlugin } from "@web/core/popover/popover_plugin";
+import { useService } from "@web/core/utils/hooks";
 import { tourCreatorState } from "@tour_manager/tour_creator_state";
 import { HintPopover } from "./hint_popover";
 import { getShortestSelector, isSelectorUnique } from "./selector";
@@ -113,17 +110,17 @@ function shorten(text, length = 60) {
  */
 export class TourCreator extends Component {
     static template = "tour_manager.TourCreator";
-    props = useProps({
-        onCancel: t.function(),
-        onFinish: t.function(),
-    });
+    static props = {
+        onCancel: Function,
+        onFinish: Function,
+    };
 
     setup() {
-        this.dialog = usePlugin(DialogPlugin);
-        this.notification = usePlugin(NotificationPlugin);
-        this.orm = usePlugin(ORM);
-        this.popover = usePlugin(PopoverPlugin);
-        this.state = proxy({
+        this.dialog = useService("dialog");
+        this.notification = useService("notification");
+        this.orm = useService("orm");
+        this.popover = useService("popover");
+        this.state = useState({
             data: tourCreatorState.get(),
             /** Label of the field being typed in, if any. */
             editingLabel: "",
@@ -147,15 +144,15 @@ export class TourCreator extends Component {
         // Listening on window during the capture phase runs before Odoo's own
         // listeners, so that clicks can be stopped before they have any effect.
         for (const eventName of BLOCKED_EVENTS) {
-            useListener(window, eventName, (ev) => this.onPointerEvent(ev), { capture: true });
+            useExternalListener(window, eventName, (ev) => this.onPointerEvent(ev), { capture: true });
         }
-        useListener(window, "pointermove", (ev) => this.onPointerMove(ev), { capture: true });
-        useListener(window, "input", (ev) => this.onInput(ev), { capture: true });
-        useListener(window, "change", (ev) => this.onChange(ev), { capture: true });
-        useListener(window, "keydown", (ev) => this.onKeydown(ev), { capture: true });
-        useListener(window, "focusout", (ev) => this.onFocusOut(ev), { capture: true });
-        useListener(window, "pointerover", (ev) => this.onPickHover(ev), { capture: true });
-        useListener(window, PRELUDE_DONE_EVENT, () => this.onPreludeDone());
+        useExternalListener(window, "pointermove", (ev) => this.onPointerMove(ev), { capture: true });
+        useExternalListener(window, "input", (ev) => this.onInput(ev), { capture: true });
+        useExternalListener(window, "change", (ev) => this.onChange(ev), { capture: true });
+        useExternalListener(window, "keydown", (ev) => this.onKeydown(ev), { capture: true });
+        useExternalListener(window, "focusout", (ev) => this.onFocusOut(ev), { capture: true });
+        useExternalListener(window, "pointerover", (ev) => this.onPickHover(ev), { capture: true });
+        useExternalListener(window, PRELUDE_DONE_EVENT, () => this.onPreludeDone());
         onMounted(() => {
             this.onPreludeDone();
             this.armPickingOfStep();

@@ -17,7 +17,7 @@ from unittest.mock import patch
 from urllib.parse import urljoin
 
 from odoo.tests import HttpCase
-from odoo.tests.common import ChromeBrowser, flushing_cursor
+from odoo.tests.common import ChromeBrowser
 
 KEYS = {
     'Enter': {'code': 'Enter', 'windowsVirtualKeyCode': 13, 'text': '\r'},
@@ -203,13 +203,16 @@ class TourManagerBrowserCase(HttpCase):
         on `path`. Set up like in ``HttpCase.browser_js``."""
         chrome = ChromeBrowser(self, headless=True, success_signal='__never__', debug=False)
         with self.allow_requests(browser=chrome), contextlib.ExitStack() as atexit:
-            atexit.enter_context(flushing_cursor(self.cr))
             atexit.callback(self._wait_remaining_requests)
             atexit.enter_context(chrome.cleanup)
             if 'bus.bus' in self.env.registry:
                 from odoo.addons.bus.websocket import WebsocketConnectionHandler  # noqa: PLC0415
                 atexit.enter_context(patch.object(WebsocketConnectionHandler, 'websocket_allowed', return_value=True))
             self.authenticate(login, login, browser=chrome)
+            # The browser's requests use test cursors, with their own caches:
+            # flush and clear the current transaction first.
+            self.cr.flush()
+            self.cr.clear()
             browser = Browser(self, chrome)
             browser.goto(path)
             yield browser

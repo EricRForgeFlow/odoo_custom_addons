@@ -2,16 +2,16 @@ import { click, waitFor } from "@odoo/hoot-dom";
 import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
 import { _t } from "@web/core/l10n/translation";
 import { patch } from "@web/core/utils/patch";
-import { TourInteractive } from "@web_tour/tour_interactive/tour_interactive";
-import { TourStepInteractive } from "@web_tour/tour_interactive/tour_step_interactive";
-import { pointerState } from "@web_tour/tour_pointer/tour_pointer";
-import { tourState } from "@web_tour/tour_state";
+import { replayState as tourState } from "@tour_manager/tour_replay/replay_state";
+import { pointerState } from "./pointer_state";
+import { TourInteractive } from "./tour_interactive";
+import { TourStepInteractive } from "./tour_step_interactive";
 
 /** Time (ms) a tour waits for a vanished element to come back before going back a step. */
 const BACKWARD_DELAY = 1000;
 
-// Same as in tour_replay_plugin.js and tour_check.js, which aren't imported so
-// that this bundle keeps working where they aren't loaded (unit tests).
+// Same as in tour_replay_service.js and tour_check.js, which aren't imported so
+// that this bundle doesn't depend on them.
 const REPLAY_CONFIG_KEY = "tourManagerReplay";
 const CHECK_CONFIG_KEY = "tourManagerCheck";
 const AUTO_START_CONFIG_KEY = "tourManagerAutoStart";

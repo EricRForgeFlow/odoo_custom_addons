@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_tour_manager_tour_create_wizard,access_tour_manager_tour_create_wizard,model_tour_manager_tour_create_wizard,base.group_system,1,1,1,1
+access_tour_manager_tour_export_wizard,access_tour_manager_tour_export_wizard,model_tour_manager_tour_export_wizard,base.group_system,1,1,1,1
+access_tour_manager_tour_import_wizard,access_tour_manager_tour_import_wizard,model_tour_manager_tour_import_wizard,base.group_system,1,1,1,1

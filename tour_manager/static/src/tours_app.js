@@ -40,7 +40,7 @@ function wait(delay) {
 /**
  * Leaves the current screen (discarding its unsaved changes) for the Tours app.
  *
- * @param {import("@web/webclient/actions/action_plugin").ActionPlugin} action
+ * @param {Object} action the action service
  * @param {Object} env
  * @param {Object} [context] additional context of the Tours action, e.g.
  *  `tour_manager_highlight_id` to highlight a tour
@@ -60,9 +60,9 @@ export async function openToursApp(action, env, context = {}) {
  * Leaves the current screen (discarding its unsaved changes) for the form of
  * a tour, in the Tours app.
  *
- * @param {import("@web/webclient/actions/action_plugin").ActionPlugin} action
+ * @param {Object} action the action service
  * @param {Object} env
- * @param {import("@web/core/orm_plugin").ORM} orm
+ * @param {Object} orm the orm service
  * @param {number} tourId
  */
 export async function openTourForm(action, env, orm, tourId) {

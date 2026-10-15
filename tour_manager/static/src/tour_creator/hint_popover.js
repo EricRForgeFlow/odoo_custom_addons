@@ -1,4 +1,4 @@
-import { Component, proxy, signal, t, useProps } from "@odoo/owl";
+import { Component, useState } from "@odoo/owl";
 import { useAutofocus } from "@web/core/utils/hooks";
 
 /**
@@ -9,27 +9,25 @@ import { useAutofocus } from "@web/core/utils/hooks";
  */
 export class HintPopover extends Component {
     static template = "tour_manager.HintPopover";
-    props = useProps({
-        description: t.string(),
-        isUnique: t.boolean(),
-        mode: t.or([t.literal("before"), t.literal("after"), t.literal("pick")]),
-        confirmLabel: t.string().optional(),
-        initialContent: t.string().optional(),
-        initialPosition: t.string().optional(),
-        onConfirm: t.function(),
-        onSkip: t.function(),
-        onDiscard: t.function(),
-        close: t.function().optional(),
-    });
-
-    hintRef = signal.ref();
+    static props = {
+        description: String,
+        isUnique: Boolean,
+        mode: { validate: (mode) => ["before", "after", "pick"].includes(mode) },
+        confirmLabel: { type: String, optional: true },
+        initialContent: { type: String, optional: true },
+        initialPosition: { type: String, optional: true },
+        onConfirm: Function,
+        onSkip: Function,
+        onDiscard: Function,
+        close: { type: Function, optional: true },
+    };
 
     setup() {
-        this.state = proxy({
+        this.state = useState({
             content: this.props.initialContent || "",
             tooltipPosition: this.props.initialPosition || "bottom",
         });
-        useAutofocus({ ref: this.hintRef });
+        useAutofocus({ refName: "hint" });
     }
 
     confirm() {

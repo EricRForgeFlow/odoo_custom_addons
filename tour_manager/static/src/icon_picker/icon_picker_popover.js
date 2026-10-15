@@ -1,25 +1,25 @@
-import { Component, onWillStart, proxy, t, usePlugin, useProps } from "@odoo/owl";
-import { ORM } from "@web/core/orm_plugin";
+import { Component, onWillStart, useState } from "@odoo/owl";
+import { useService } from "@web/core/utils/hooks";
 import { useDebounced } from "@web/core/utils/timing";
 
-/** Prefix of the icons of Odoo's icon set; other values are image URLs. */
-export const ICON_SET_PREFIX = "oi:";
+/** Prefix of the Font Awesome icons; other values are image URLs. */
+export const ICON_SET_PREFIX = "fa:";
 
 /**
  * Lets the user choose an icon among the app icons of the home screen and
- * Odoo's icon set, which can be searched by name or by tags (e.g. "money").
+ * the Font Awesome icons, which can be searched by name (e.g. "money").
  */
 export class IconPickerPopover extends Component {
     static template = "tour_manager.IconPickerPopover";
-    props = useProps({
-        value: t.string().optional(),
-        onSelect: t.function(),
-        close: t.function().optional(),
-    });
+    static props = {
+        value: { type: String, optional: true },
+        onSelect: Function,
+        close: { type: Function, optional: true },
+    };
 
     setup() {
-        this.orm = usePlugin(ORM);
-        this.state = proxy({
+        this.orm = useService("orm");
+        this.state = useState({
             tab: this.props.value?.startsWith(ICON_SET_PREFIX) ? "icons" : "apps",
             search: "",
             apps: [],

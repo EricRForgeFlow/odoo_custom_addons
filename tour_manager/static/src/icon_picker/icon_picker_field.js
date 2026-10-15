@@ -1,4 +1,4 @@
-import { Component, signal, useProps } from "@odoo/owl";
+import { Component, useRef } from "@odoo/owl";
 import { _t } from "@web/core/l10n/translation";
 import { usePopover } from "@web/core/popover/popover_hook";
 import { registry } from "@web/core/registry";
@@ -6,16 +6,15 @@ import { standardFieldProps } from "@web/views/fields/standard_field_props";
 import { ICON_SET_PREFIX, IconPickerPopover } from "./icon_picker_popover";
 
 /**
- * Char field holding an icon: an icon of Odoo's icon set ("oi:<name>") or the
- * URL of an image (e.g. an app icon), chosen in a popover.
+ * Char field holding an icon: a Font Awesome icon ("fa:<name>") or the URL of
+ * an image (e.g. an app icon), chosen in a popover.
  */
 export class IconPickerField extends Component {
     static template = "tour_manager.IconPickerField";
-    props = useProps({ ...standardFieldProps });
-
-    buttonRef = signal.ref();
+    static props = { ...standardFieldProps };
 
     setup() {
+        this.buttonRef = useRef("button");
         this.popover = usePopover(IconPickerPopover, { position: "bottom" });
     }
 
@@ -28,7 +27,7 @@ export class IconPickerField extends Component {
     }
 
     open() {
-        this.popover.open(this.buttonRef(), {
+        this.popover.open(this.buttonRef.el, {
             value: this.value,
             onSelect: (value) => this.props.record.update({ [this.props.name]: value }),
         });

@@ -1,7 +1,8 @@
+import base64
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 from odoo.fields import Command
-from odoo.tools.binary import BinaryBytes
 
 
 class TourManagerTourExportWizard(models.TransientModel):
@@ -47,7 +48,7 @@ class TourManagerTourExportWizard(models.TransientModel):
         else:
             content, extension = self.tour_ids._tour_manager_export_xml(), 'xml'
         filename = f"tours.{extension}" if len(self.tour_ids) > 1 else f"{self.tour_ids.name}.{extension}"
-        self.write({'file': BinaryBytes(content.encode(), filename), 'filename': filename})
+        self.write({'file': base64.b64encode(content.encode()), 'filename': filename})
         return {
             'type': 'ir.actions.act_url',
             'url': f'/web/content/{self._name}/{self.id}/file/{self.filename}?download=true',

@@ -22,13 +22,13 @@
             </div>
             <t t-else="">
                 <input type="search" class="form-control mb-2 o_tour_manager_icon_search" placeholder="Search icons, e.g. money"
-                       t-model.proxy="this.state.search" t-on-input="() => this.searchIcons()"/>
+                       t-model="state.search" t-on-input="() => this.searchIcons()"/>
                 <div class="o_tour_manager_icon_grid">
                     <button t-foreach="this.state.icons" t-as="icon" t-key="icon" type="button"
                             class="btn btn-light p-1 o_tour_manager_set_icon"
-                            t-att-class="{ active: this.props.value === 'oi:' + icon }"
-                            t-att-title="icon" t-att-data-name="icon" t-on-click="() => this.select('oi:' + icon)">
-                        <i class="oi fs-3" t-att-data-icon="icon"/>
+                            t-att-class="{ active: this.props.value === 'fa:' + icon }"
+                            t-att-title="icon" t-att-data-name="icon" t-on-click="() => this.select('fa:' + icon)">
+                        <i t-attf-class="fa fa-{{ icon }} fs-3"/>
                     </button>
                 </div>
                 <div t-if="!this.state.icons.length" class="text-muted text-center py-3">No icons found</div>
