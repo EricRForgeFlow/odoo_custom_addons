@@ -105,8 +105,10 @@ and view edits are usually picked up live.
 
 **Work on another Odoo version**: give that version its own worktree instead of switching
 branches in this checkout, so each sandbox always mounts code for its own version:
-`git worktree add ../odoo_custom_addons-19 19.0` (create the branch first if needed), then
-mount from `../odoo_custom_addons-19/<mod>` in `odoo-sandbox-19`.
+`git worktree add ../odoo_custom_addons-19 19.0` (or a feature branch based on 19.0), then
+mount from `../odoo_custom_addons-19/<mod>` in `odoo-sandbox-19`. Branch names follow the OCA
+convention: version branches `19.0`/`20.0`, feature branches `<version>-<add|imp|fix|mig>-<module>`
+started from them (e.g. `20.0-add-tour_manager`). See the README's *Branches* section.
 
 **Create a sandbox for a new version** (XX):
 

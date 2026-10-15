@@ -109,8 +109,20 @@ list the addons you need in `addons.yaml` and run `invoke git-aggregate`.
 
 A mount points to a folder, not a branch. `odoo-sandbox-20` serves whatever is checked out in
 `odoo_custom_addons/` at that moment. If the module doesn't exist on that branch, Odoo can't
-find it. For example, `tour_manager` currently lives on the `tour_manager` branch, not on
-`master`.
+find it. For example, `tour_manager` currently lives on the `20.0-add-tour_manager` branch,
+not on `master` or `20.0`.
+
+## Branches
+
+Branches follow the [OCA](https://github.com/OCA) convention:
+
+- **Version branches** (`19.0`, `20.0`) hold the code for one Odoo version. Every module on
+  them has a manifest version with that prefix (`20.0.1.0.0`).
+- **Feature branches** start from a version branch and merge back into it. They're named
+  `<version>-<action>-<module>`, where the action is `add` (new module), `imp` (improvement),
+  `fix` or `mig` (migration from another version). Examples: `20.0-add-tour_manager`,
+  `19.0-mig-tour_manager`.
+- `master` holds the repository tooling (this README, `.claude/`), not modules.
 
 ## Working on another Odoo version
 
@@ -119,7 +131,7 @@ Don't switch this checkout between version branches. Give each version its own
 its own version:
 
 ```bash
-# from this repository; create the 19.0 branch first if it doesn't exist (git branch 19.0 <start-point>)
+# from this repository; check out the version branch, or a feature branch based on it
 git worktree add ../odoo_custom_addons-19 19.0
 ```
 
