@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="qc_test_form_view" model="ir.ui.view">
+        <field name="name">qc.test.form - vision_inspection_quality_control_oca</field>
+        <field name="model">qc.test</field>
+        <field name="inherit_id" ref="quality_control_oca.qc_test_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <button name="action_add_vision_questions" type="object" string="Add Questions from Defect Classes"
+                            help="Add a question for each defect class of Vision Inspection the test doesn't ask about yet."/>
+                </header>
+            </xpath>
+            <xpath expr="//field[@name='test_lines']/list/field[@name='type']" position="after">
+                <field name="vision_defect_class_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="qc_test_question_form_view" model="ir.ui.view">
+        <field name="name">qc.test.question.form - vision_inspection_quality_control_oca</field>
+        <field name="model">qc.test.question</field>
+        <field name="inherit_id" ref="quality_control_oca.qc_test_question_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='type']" position="after">
+                <field name="vision_defect_class_id" invisible="type != 'quantitative'"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
