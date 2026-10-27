@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_vision_inspection_root" name="Vision Inspection" sequence="310"
+              web_icon="vision_inspection,static/description/icon.svg"
+              groups="vision_inspection.group_vision_user"/>
+
+    <menuitem id="menu_vision_inspection" name="Inspections" parent="menu_vision_inspection_root"
+              action="vision_inspection_action" sequence="10"/>
+
+    <menuitem id="menu_vision_reporting" name="Reporting" parent="menu_vision_inspection_root" sequence="20"/>
+    <menuitem id="menu_vision_inspection_report" name="Inspections" parent="menu_vision_reporting"
+              action="vision_inspection_action_report" sequence="10"/>
+    <menuitem id="menu_vision_detection_report" name="Defects" parent="menu_vision_reporting"
+              action="vision_detection_action_report" sequence="20"/>
+
+    <menuitem id="menu_vision_configuration" name="Configuration" parent="menu_vision_inspection_root"
+              sequence="30" groups="vision_inspection.group_vision_manager"/>
+    <menuitem id="menu_vision_source" name="Sources" parent="menu_vision_configuration"
+              action="vision_source_action" sequence="10"/>
+    <menuitem id="menu_vision_station" name="Stations" parent="menu_vision_configuration"
+              action="vision_station_action" sequence="20"/>
+    <menuitem id="menu_vision_defect_class" name="Defect Classes" parent="menu_vision_configuration"
+              action="vision_defect_class_action" sequence="30"/>
+</odoo>

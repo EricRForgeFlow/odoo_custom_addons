@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="product_demo_pcb" model="product.product">
+        <field name="name">Printed Circuit Board</field>
+        <field name="default_code">PCB-001</field>
+        <field name="type">consu</field>
+    </record>
+
+    <record id="defect_class_scratch" model="vision.defect.class">
+        <field name="name">Scratch</field>
+        <field name="code">scratch</field>
+        <field name="severity">minor</field>
+        <field name="max_allowed">1</field>
+    </record>
+    <record id="defect_class_missing" model="vision.defect.class">
+        <field name="name">Missing Component</field>
+        <field name="code">missing</field>
+        <field name="severity">critical</field>
+    </record>
+    <record id="defect_class_bent" model="vision.defect.class">
+        <field name="name">Bent Pin</field>
+        <field name="code">bent</field>
+        <field name="severity">major</field>
+    </record>
+
+    <record id="source_demo" model="vision.source">
+        <field name="name">Line 1 Defect Detector</field>
+        <field name="code">line1</field>
+        <field name="token">demo-token-change-me</field>
+    </record>
+    <record id="station_demo" model="vision.station">
+        <field name="name">Line 1 - Camera A</field>
+        <field name="code">line1-cam-a</field>
+        <field name="source_id" ref="source_demo"/>
+        <field name="product_id" ref="product_demo_pcb"/>
+    </record>
+
+    <function model="vision.source" name="_ingest" eval="[[ref('source_demo')], {
+            'external_id': 'demo-1',
+            'lot': 'LOT-0001',
+            'model': {'name': 'rf-detr-nano', 'version': 'demo'},
+            'detections': [],
+        }]"/>
+    <function model="vision.source" name="_ingest" eval="[[ref('source_demo')], {
+            'external_id': 'demo-2',
+            'lot': 'LOT-0001',
+            'model': {'name': 'rf-detr-nano', 'version': 'demo'},
+            'detections': [
+                {'label': 'scratch', 'confidence': 0.92, 'bbox': {'x': 0.1, 'y': 0.2, 'w': 0.1, 'h': 0.05}},
+                {'label': 'missing', 'confidence': 0.88, 'bbox': {'x': 0.5, 'y': 0.5, 'w': 0.08, 'h': 0.08}},
+            ],
+        }]"/>
+    <function model="vision.source" name="_ingest" eval="[[ref('source_demo')], {
+            'external_id': 'demo-3',
+            'lot': 'LOT-0002',
+            'model': {'name': 'rf-detr-nano', 'version': 'demo'},
+            'detections': [
+                {'label': 'scratch', 'confidence': 0.62, 'bbox': {'x': 0.3, 'y': 0.6, 'w': 0.05, 'h': 0.1}},
+            ],
+        }]"/>
+</odoo>

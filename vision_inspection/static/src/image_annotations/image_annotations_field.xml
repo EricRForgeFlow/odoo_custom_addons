@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="vision_inspection.ImageAnnotationsField">
+        <div class="o_vision_image_annotations">
+            <div t-if="this.props.record.data[this.props.name]" class="o_vision_image_frame">
+                <img t-att-src="this.imageSrc" alt="Inspected image" class="img-fluid"/>
+                <div t-foreach="this.boxes" t-as="box" t-key="box.id" t-att-class="box.className" t-att-style="box.style">
+                    <span class="o_vision_box_label" t-out="box.label"/>
+                </div>
+            </div>
+            <div t-else="" class="text-muted">No image was sent with the results.</div>
+        </div>
+    </t>
+
+</templates>

@@ -1,0 +1,38 @@
+.o_vision_image_annotations {
+    .o_vision_image_frame {
+        position: relative;
+        display: inline-block;
+        max-width: 100%;
+    }
+
+    .o_vision_box {
+        --vision-box-color: #{$warning};
+        position: absolute;
+        border: 2px solid var(--vision-box-color);
+        pointer-events: none;
+
+        &.o_vision_box_minor {
+            --vision-box-color: #{$info};
+        }
+
+        &.o_vision_box_critical {
+            --vision-box-color: #{$danger};
+        }
+
+        &.o_vision_box_ignored {
+            --vision-box-color: #{$gray-500};
+            border-style: dashed;
+        }
+    }
+
+    .o_vision_box_label {
+        position: absolute;
+        bottom: 100%;
+        left: -2px;
+        padding: 0 4px;
+        background-color: var(--vision-box-color);
+        color: $white;
+        font-size: $font-size-sm;
+        white-space: nowrap;
+    }
+}

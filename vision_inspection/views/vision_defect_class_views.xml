@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="vision_defect_class_view_list" model="ir.ui.view">
+        <field name="name">vision.defect.class.list</field>
+        <field name="model">vision.defect.class</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="is_defect"/>
+                <field name="severity" widget="badge"
+                       decoration-warning="severity == 'major'" decoration-danger="severity == 'critical'"/>
+                <field name="max_allowed"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="vision_defect_class_view_search" model="ir.ui.view">
+        <field name="name">vision.defect.class.search</field>
+        <field name="model">vision.defect.class</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" filter_domain="['|', ('name', 'ilike', self), ('code', 'ilike', self)]"/>
+                <filter name="critical" string="Critical" domain="[('severity', '=', 'critical')]"/>
+                <filter name="not_defect" string="Not Defects" domain="[('is_defect', '=', False)]"/>
+                <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="vision_defect_class_action" model="ir.actions.act_window">
+        <field name="name">Defect Classes</field>
+        <field name="res_model">vision.defect.class</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Map the labels of your models to defects</p>
+            <p>Classes are also created when a model sends a label Odoo doesn't know yet.</p>
+        </field>
+    </record>
+</odoo>

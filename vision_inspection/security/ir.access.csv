@@ -1,0 +1,14 @@
+id,name,model_id,group_id/id,operation,domain
+access_vision_source_user,vision.source user,vision.source,vision_inspection.group_vision_user,r,
+access_vision_source_manager,vision.source manager,vision.source,vision_inspection.group_vision_manager,crud,
+vision_source_company_rule,Vision source multi-company,vision.source,,crud,"[('company_id', 'in', company_ids)]"
+access_vision_station_user,vision.station user,vision.station,vision_inspection.group_vision_user,r,
+access_vision_station_manager,vision.station manager,vision.station,vision_inspection.group_vision_manager,crud,
+vision_station_company_rule,Vision station multi-company,vision.station,,crud,"[('company_id', 'in', company_ids)]"
+access_vision_defect_class_user,vision.defect.class user,vision.defect.class,vision_inspection.group_vision_user,r,
+access_vision_defect_class_manager,vision.defect.class manager,vision.defect.class,vision_inspection.group_vision_manager,crud,
+access_vision_inspection_user,vision.inspection user,vision.inspection,vision_inspection.group_vision_user,cru,
+access_vision_inspection_manager,vision.inspection manager,vision.inspection,vision_inspection.group_vision_manager,crud,
+vision_inspection_company_rule,Vision inspection multi-company,vision.inspection,,crud,"[('company_id', 'in', company_ids)]"
+access_vision_detection_user,vision.detection user,vision.detection,vision_inspection.group_vision_user,crud,
+vision_detection_company_rule,Vision detection multi-company,vision.detection,,crud,"[('company_id', 'in', company_ids)]"

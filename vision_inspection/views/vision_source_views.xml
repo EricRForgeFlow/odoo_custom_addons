@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="vision_source_view_list" model="ir.ui.view">
+        <field name="name">vision.source.list</field>
+        <field name="model">vision.source</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="adapter"/>
+                <field name="user_id" widget="many2one_avatar_user"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="vision_source_view_form" model="ir.ui.view">
+        <field name="name">vision.source.form</field>
+        <field name="model">vision.source</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_regenerate_token" type="object" string="Regenerate Token" groups="vision_inspection.group_vision_manager"
+                            confirm="The system will be rejected until it sends the new token. Continue?"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_inspections" type="object" class="oe_stat_button" icon="photo_camera">
+                            <field name="inspection_count" widget="statinfo" string="Inspections"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. Line 1 defect detector"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="adapter"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="user_id" widget="many2one_avatar_user"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <group string="Connection">
+                        <field name="endpoint_url" widget="CopyClipboardChar"/>
+                        <field name="token" widget="CopyClipboardChar"/>
+                    </group>
+                    <notebook>
+                        <page string="Stations" name="stations">
+                            <field name="station_ids" context="{'default_source_id': id}">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="code"/>
+                                    <field name="product_id"/>
+                                    <field name="min_confidence"/>
+                                    <field name="review_confidence"/>
+                                    <field name="verdict_mode"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="vision_source_view_search" model="ir.ui.view">
+        <field name="name">vision.source.search</field>
+        <field name="model">vision.source</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" filter_domain="['|', ('name', 'ilike', self), ('code', 'ilike', self)]"/>
+                <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="vision_source_action" model="ir.actions.act_window">
+        <field name="name">Sources</field>
+        <field name="res_model">vision.source</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Connect a computer vision system</p>
+            <p>A source is a system that sends the defects it detects to Odoo, through the endpoint and token shown on its form.</p>
+        </field>
+    </record>
+</odoo>

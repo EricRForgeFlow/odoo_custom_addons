@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="seq_vision_inspection" model="ir.sequence">
+        <field name="name">Vision Inspection</field>
+        <field name="code">vision.inspection</field>
+        <field name="prefix">VIS/%(year)s/</field>
+        <field name="padding">6</field>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo>
