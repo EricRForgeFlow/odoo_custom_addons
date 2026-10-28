@@ -20,6 +20,9 @@ The video for phase 1 alone, with drawn boards, is in [`../vision_inspection`](.
 
 ## Requirements
 
+- The slide template `tools/forgeflow_reveal/`, which lives on `master` (it doesn't depend on
+  the Odoo version). On a version branch, extract it from the repository root, untracked and
+  ignored there: `git archive master tools/forgeflow_reveal | tar -x`.
 - The `odoo-sandbox-20` sandbox running, with both modules mounted (`http://localhost:20069`).
 - `../cv_quality_edge_demo` next to this repository, set up (`uv sync`, `uv run cv-prepare`),
   with the trained weights in `models/pcb_nano.pth` (its Colab notebook makes them).

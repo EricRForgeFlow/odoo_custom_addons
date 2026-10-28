@@ -18,12 +18,14 @@ narrated offline by Kokoro.
 
 ## Requirements
 
+- The slide template `tools/forgeflow_reveal/`, which lives on `master` (it doesn't depend on
+  the Odoo version). On a version branch, extract it from the repository root, untracked and
+  ignored there: `git archive master tools/forgeflow_reveal | tar -x`.
 - The `odoo-sandbox-20` sandbox running, with both modules mounted (`http://localhost:20069`).
 - odoo-demo-recorder installed in its own checkout (`uv venv && uv pip install -e . pyyaml`),
   and Chromium for Playwright.
-- `kokoro-say` on the `PATH`: a wrapper around kokoro-onnx run with `uv`, in
-  `~/.local/bin/kokoro-say`. It shares the Kokoro model of advanced-planning-system-demo
-  (`~/.cache/aps-demo-media/kokoro`, downloaded once).
+- The recorder narrates with Kokoro, built in. `DEMO_KOKORO_DIR` reuses a model already
+  downloaded elsewhere (e.g. `~/.cache/aps-demo-media/kokoro`).
 
 ## Prepare the database (once)
 
