@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Line 1 console</title>
+<style>
+  @font-face { font-family: Inter; font-weight: 400; src: url(../../forgeflow_reveal/vendor/inter/inter-latin-400-normal.woff2); }
+  @font-face { font-family: Inter; font-weight: 600; src: url(../../forgeflow_reveal/vendor/inter/inter-latin-600-normal.woff2); }
+  @font-face { font-family: Inter; font-weight: 800; src: url(../../forgeflow_reveal/vendor/inter/inter-latin-800-normal.woff2); }
+  :root { --bg: #11161d; --panel: #1a222c; --line: #2a3542; --text: #e6edf3; --muted: #8b98a8;
+          --ok: #2fbf71; --warn: #f0a83a; --bad: #e5484d; --blue: #3d7bd9; }
+  * { box-sizing: border-box; }
+  body { margin: 0; height: 100vh; background: var(--bg); color: var(--text);
+         font: 16px/1.4 Inter, system-ui, sans-serif; display: flex; flex-direction: column; }
+  header { display: flex; align-items: center; gap: 14px; padding: 16px 26px; border-bottom: 1px solid var(--line); }
+  header h1 { margin: 0; font-size: 22px; font-weight: 800; }
+  .live { width: 12px; height: 12px; border-radius: 50%; background: var(--bad); box-shadow: 0 0 10px var(--bad); }
+  .badge { padding: 4px 10px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line);
+           color: var(--muted); font-size: 14px; }
+  #status { margin-left: auto; color: var(--muted); font-size: 15px; }
+  main { flex: 1; display: grid; grid-template-columns: 1.25fr 1fr; gap: 22px; padding: 22px 26px; min-height: 0; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px;
+           display: flex; flex-direction: column; min-height: 0; }
+  .panel h2 { margin: 0 0 12px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .frame { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; background: #0d1117;
+           border-radius: 8px; overflow: hidden; }
+  .frame img { max-width: 100%; max-height: 100%; display: none; }
+  .frame .waiting { color: var(--muted); font-size: 18px; }
+  .caption { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 17px; }
+  .caption b { font-weight: 600; }
+  .counters { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+  .counter { background: #0d1117; border-radius: 8px; padding: 10px 12px; }
+  .counter span { display: block; color: var(--muted); font-size: 13px; }
+  .counter b { font-size: 30px; font-weight: 800; }
+  .counter.pass b { color: var(--ok); } .counter.fail b { color: var(--bad); } .counter.review b { color: var(--warn); }
+  #log { list-style: none; margin: 0; padding: 0; overflow: hidden; flex: 1; }
+  #log li { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 9px 10px; border-radius: 8px;
+            margin-bottom: 6px; background: #0d1117; animation: enter .35s ease-out; }
+  #log li .board { font-weight: 600; }
+  #log li .found { grid-column: 1 / 3; color: var(--muted); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .verdict { padding: 2px 12px; border-radius: 999px; font: 700 14px Inter; color: #111; align-self: center; }
+  .verdict.pass { background: var(--ok); } .verdict.review { background: var(--warn); } .verdict.fail { background: var(--bad); color: #fff; }
+  @keyframes enter { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="live"></span>
+  <h1>Line 1 · Camera A</h1>
+  <span class="badge">RF-DETR Nano · laptop CPU</span>
+  <span class="badge">VisA test boards, never seen in training</span>
+  <span id="status">Starting the model…</span>
+</header>
+<main>
+  <section class="panel">
+    <h2>Board under the camera · what the model found</h2>
+    <div class="frame"><img id="image" alt="Board"/><span class="waiting" id="waiting">Waiting for the first board…</span></div>
+    <div class="caption"><span id="board">&nbsp;</span><span id="latency"></span></div>
+  </section>
+  <section class="panel">
+    <h2>Sent to Odoo</h2>
+    <div class="counters">
+      <div class="counter"><span>Inspected</span><b id="count-all">0</b></div>
+      <div class="counter pass"><span>Pass</span><b id="count-pass">0</b></div>
+      <div class="counter review"><span>Review</span><b id="count-review">0</b></div>
+      <div class="counter fail"><span>Fail</span><b id="count-fail">0</b></div>
+    </div>
+    <ul id="log"></ul>
+  </section>
+</main>
+<script>
+  const counts = { all: 0, pass: 0, review: 0, fail: 0 };
+  const describe = (detections) => detections.length
+    ? detections.map((d) => `${d.label} ${Math.round(d.confidence * 100)}%`).join(", ")
+    : "no defect found";
+  window.setStatus = (text) => { document.getElementById("status").textContent = text; };
+  window.addBoard = function (event) {
+    const image = document.getElementById("image");
+    image.src = event.annotated_url;
+    image.style.display = "block";
+    document.getElementById("waiting").style.display = "none";
+    document.getElementById("board").innerHTML = `<b>${event.board}</b> · board ${event.number} of ${event.total}`;
+    document.getElementById("latency").textContent = `${event.latency_ms} ms`;
+    counts.all += 1;
+    if (event.verdict) counts[event.verdict] += 1;
+    for (const key in counts) document.getElementById(`count-${key}`).textContent = counts[key];
+    const item = document.createElement("li");
+    const verdict = event.verdict
+      ? `<span class="verdict ${event.verdict}">${event.verdict.toUpperCase()}</span>`
+      : `<span class="verdict">${event.error || "not sent"}</span>`;
+    item.innerHTML = `<span class="board">${event.inspection || ""} · ${event.board}</span>${verdict}` +
+      `<span class="found">${describe(event.detections)}</span>`;
+    const log = document.getElementById("log");
+    log.prepend(item);
+    while (log.children.length > 7) log.lastChild.remove();
+    window.setStatus(`Board ${event.number} of ${event.total}`);
+  };
+</script>
+</body>
+</html>

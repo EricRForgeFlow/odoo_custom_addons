@@ -29,5 +29,5 @@ node_modules/
 *.orig
 *.rej
 
-# Repository tooling, tracked on master only
-tools/
+# Version-independent tooling (the slide template), tracked on master only
+tools/forgeflow_reveal/
