@@ -122,7 +122,9 @@ Branches follow the [OCA](https://github.com/OCA) convention:
   `<version>-<action>-<module>`, where the action is `add` (new module), `imp` (improvement),
   `fix` or `mig` (migration from another version). Examples: `20.0-add-tour_manager`,
   `19.0-mig-tour_manager`.
-- `master` holds the repository tooling (this README, `.claude/`), not modules.
+- `master` holds the version-independent tooling (this README, `.claude/`, the slide template
+  in `tools/forgeflow_reveal/`), not modules. What depends on an Odoo version, like the demo
+  videos of its modules, lives on that version branch.
 
 ## Working on another Odoo version
 
@@ -220,16 +222,23 @@ are git repositories with no commits, so `git status` and `git diff` show what c
 
 ## Tools
 
-`tools/` holds what isn't an addon, on `master` with the rest of the tooling:
+`tools/` holds what isn't an addon:
 
-| Folder | Purpose |
-|---|---|
-| `tools/forgeflow_reveal/` | ForgeFlow's reveal.js template: slide decks built from YAML (see its README) |
-| `tools/demos/<module>/` | The narrated demo video of a module: slides, recording flow and demo data (see its README) |
+| Folder | Branch | Purpose |
+|---|---|---|
+| `tools/forgeflow_reveal/` | `master` | ForgeFlow's reveal.js template: slide decks built from YAML (see its README) |
+| `tools/demos/<name>/` | version branch (`20.0`) | The narrated demo video of modules of that version: slides, recording flow and demo data (see its README) |
 
-Videos are recorded with [odoo-demo-recorder](https://gitlab.forgeflow.io/forgeflow/odoo-demo-recorder)
-and narrated offline with Kokoro (`kokoro-say`). Generated files (decks, images, audio,
-videos) aren't committed.
+The demos build their slides with the template. On a version branch it's ignored, and
+extracted from `master` without switching branches, from the repository root:
+
+```bash
+git archive master tools/forgeflow_reveal | tar -x
+```
+
+Videos are recorded with [odoo-demo-recorder](https://gitlab.forgeflow.io/forgeflow/odoo-demo-recorder),
+in 16:9 (`--size 1600x900`), and narrated offline with Kokoro. Generated files (decks, images,
+audio, videos) aren't committed.
 
 ## Code style
 
