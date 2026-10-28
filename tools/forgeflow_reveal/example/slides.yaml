@@ -1,0 +1,48 @@
+# Every layout and diagram of the ForgeFlow reveal.js template, with their
+# default texts: the visual test of the template, and a starting point.
+#   python ../deck.py slides.yaml .
+title: "ForgeFlow template: every slide kind"
+slides:
+  - {id: cover, kind: cover, title: "Guided demo of ForgeFlow Cloud ERP", subtitle: "Example Company · From the first contact to the real margin", say: "The cover."}
+  - id: cards
+    kind: cards
+    title: Cards
+    cards: [["Made in the workshop", "A product of its own", "1"], ["Configured per order", "Variants and options", "2"], ["Subcontracted", "Bought from a partner", "3"], ["Turnkey", "Installed on site", "4"]]
+    footer: "Each order is a project: people, workshop and purchases at once."
+    say: ["Four cards, one by one.", "The first.", "The second.", "The third.", "The fourth."]
+  - id: people
+    kind: people
+    title: People
+    people: [["Anna Berg", "Sales"], ["Bo Lund", "Project manager"], ["Carl Dahl", "Technical office"], ["Dina Holm", "Purchasing"], ["Erik Juhl", "Finance"], ["Freja Kragh", "Workshop"], ["Gustav Moe", "On site"], ["Hanne Ravn", "On site"]]
+  - id: story
+    kind: story
+    title: Story
+    items: [["Customer One", "A project from start to end."], ["Customer Two", "Asks for a date."], ["Customer Three", "Asks for something custom."], ["Three projects at once", "Sharing the crew."]]
+  - id: agenda
+    kind: agenda
+    title: Agenda
+    items: [["Selling with reliable dates", "Promise, capacity"], ["Projects on time", "Critical chain"], ["Order to workshop", "Purchasing, manufacturing"], ["The money", "Treasury, margin"]]
+  - {id: section, kind: section, number: 1, title: "Selling with reliable dates", subtitle: "Opportunity, promise, capacity and custom products"}
+  - id: flow
+    kind: flow
+    title: Flow
+    steps: [[Opportunity, A customer who might buy], [Quotation, With versions and margin], [Order, The customer accepts], [Project, All the work and all the money]]
+    footer: The margin is known before the quotation is sent.
+  - id: statement
+    kind: statement
+    title: Statement
+    points: [[Bill of materials, "The recipe of a product."], [Revisions, Every version is kept.], [Change order, Approved before it is applied.]]
+  - {id: promise, kind: promise, title: "A promise: the committed date"}
+  - {id: capacity, kind: capacity, title: "Finite capacity: one job at a time"}
+  - {id: ctp, kind: ctp, title: Computing the delivery date}
+  - {id: critical, kind: critical, title: The critical path}
+  - {id: float, kind: float, title: Float}
+  - {id: safety, kind: safety, title: Every task hides a margin}
+  - {id: parkinson, kind: parkinson, title: But that margin is lost}
+  - {id: pool, kind: pool, title: One buffer for the whole project}
+  - {id: feeding, kind: feeding, title: The feeding buffer}
+  - {id: fever, kind: fever, title: The fever chart}
+  - {id: zones, kind: zones, title: What to do in each zone}
+  - {id: priority, kind: priority, title: Priority by buffer status}
+  - {id: quote, kind: quote, title: The date to quote includes the buffer}
+  - {id: summary, kind: summary, title: In summary, points: ["Dates that can be kept.", "Projects protected by a shared buffer.", "From the first contact to the real margin, in one system."]}

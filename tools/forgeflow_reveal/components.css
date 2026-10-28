@@ -1,0 +1,120 @@
+/* Copyright 2026 ForgeFlow S.L. (https://www.forgeflow.com)
+   License OPL-1 (https://www.odoo.com/documentation/master/legal/licenses.html).
+
+   The pieces of the diagrams: boxes placed on the slide (bars, hatched
+   margins, panels, dots, texts), arrows and the fever chart. Positions come
+   from the markup (inches x 192 px). */
+
+.reveal .ff-box { position: absolute; box-sizing: border-box; }
+
+.reveal .ff-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-radius: 18px;
+    font-weight: 700;
+    line-height: 1.15;
+    padding: 0 14px;
+    color: var(--ff-white);
+    box-shadow: 0 8px 22px rgba(5, 10, 52, 0.14);
+}
+.reveal .ff-bar.ff-blue { background: var(--ff-blue); }
+.reveal .ff-bar.ff-coral { background: var(--ff-coral); }
+.reveal .ff-bar.ff-navy { background: var(--ff-navy); }
+.reveal .ff-bar.ff-lavender { background: var(--ff-lavender); color: var(--ff-blue); }
+
+.reveal .ff-hatched {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-radius: 18px;
+    border: 4px dashed var(--ff-blue);
+    background: repeating-linear-gradient(-45deg, rgba(51, 50, 162, 0.07) 0 14px, rgba(51, 50, 162, 0.16) 14px 28px);
+    color: var(--ff-blue);
+    font-weight: 600;
+    line-height: 1.1;
+}
+
+.reveal .ff-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    padding: 30px 36px;
+    border-radius: 26px;
+    font-size: 38px;
+    line-height: 1.25;
+}
+.reveal .ff-panel b { font-size: 42px; }
+.reveal .ff-panel.ff-tint { background: var(--ff-tint); color: var(--ff-navy); }
+.reveal .ff-panel.ff-lavender { background: var(--ff-lavender); color: var(--ff-blue); }
+.reveal .ff-panel.ff-dashed { border: 4px dashed var(--ff-blue); }
+
+.reveal .ff-plus { display: flex; align-items: center; justify-content: center; font-size: 90px; font-weight: 700; color: var(--ff-blue); }
+
+.reveal .ff-text { line-height: 1.3; }
+.reveal .ff-text p { margin: 0 0 14px; }
+.reveal .ff-text.ff-strong, .reveal .ff-strong { font-weight: 700; color: var(--ff-blue); }
+.reveal .ff-text.ff-center { text-align: center; }
+.reveal .ff-text.ff-navy { color: var(--ff-navy); }
+.reveal .ff-grey, .reveal .ff-text.ff-grey { color: var(--ff-grey); }
+.reveal .ff-blue-text { color: var(--ff-blue); }
+.reveal .ff-coral-text { color: var(--ff-coral); }
+
+.reveal .ff-dot { border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--ff-white); font-weight: 700; }
+.reveal .ff-dot.ff-green-dot, .reveal .ff-dot.ff-green { background: var(--ff-dot-green); }
+.reveal .ff-dot.ff-yellow-dot, .reveal .ff-dot.ff-yellow { background: var(--ff-dot-yellow); }
+.reveal .ff-dot.ff-red-dot, .reveal .ff-dot.ff-red { background: var(--ff-dot-red); }
+
+.reveal .ff-states { position: absolute; left: 250px; top: 570px; display: flex; gap: 140px; }
+.reveal .ff-state { display: flex; align-items: center; gap: 30px; font-size: 48px; }
+.reveal .ff-state .ff-dot { width: 96px; height: 96px; }
+
+.reveal .ff-rule-line { position: absolute; height: 4px; background: var(--ff-light); }
+.reveal .ff-link { background: var(--ff-grey); }
+.reveal .ff-dash { border-left: 5px dashed var(--ff-navy); width: 0 !important; }
+
+.reveal .ff-definition {
+    position: absolute;
+    left: 96px;
+    top: 720px;
+    width: 1730px;
+    font-size: 45px;
+}
+
+.reveal .ff-project {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+    padding: 0 24px;
+    border-radius: 20px;
+}
+.reveal .ff-project .ff-dot { flex: none; width: 96px; height: 96px; }
+.reveal .ff-project b { display: block; font-size: 32px; line-height: 1.15; max-height: 76px; overflow: hidden; }
+.reveal .ff-project .ff-sub { display: block; font-size: 28px; color: var(--ff-grey); }
+.reveal .ff-project.ff-zone-red { background: var(--ff-zone-red); }
+.reveal .ff-project.ff-zone-green { background: var(--ff-zone-green); }
+
+/* arrows and charts: an SVG over the whole slide */
+.reveal svg.ff-arrow,
+.reveal svg.ff-chart { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; pointer-events: none; }
+.reveal svg.ff-arrow line { stroke-width: 6; stroke-linecap: round; }
+.reveal svg.ff-stroke-grey line { stroke: var(--ff-grey); }
+.reveal svg.ff-stroke-blue line { stroke: var(--ff-blue); stroke-width: 9; }
+#ff-head path { fill: var(--ff-grey); }
+
+.reveal .ff-zone-green { fill: var(--ff-zone-green); }
+.reveal .ff-zone-yellow { fill: var(--ff-zone-yellow); }
+.reveal .ff-zone-red { fill: var(--ff-zone-red); }
+.reveal .ff-axis { stroke: var(--ff-navy); stroke-width: 4; }
+.reveal .ff-trail { stroke: var(--ff-navy); stroke-width: 4; stroke-dasharray: 10 10; }
+.reveal .ff-point { stroke: var(--ff-white); stroke-width: 6; transform-box: fill-box; transform-origin: center; }
+.reveal .ff-green-fill { fill: var(--ff-dot-green); }
+.reveal .ff-yellow-fill { fill: var(--ff-dot-yellow); }
+.reveal .ff-red-fill { fill: var(--ff-dot-red); }
+
+/* the critical chain lights up as each task joins it */
+.reveal .ff-critical .ff-bar.ff-coral.visible,
+.reveal .slides section.present.ff-critical .ff-bar.ff-coral:not(.fragment) { box-shadow: 0 0 0 6px rgba(253, 110, 114, 0.25), 0 8px 22px rgba(5, 10, 52, 0.14); }

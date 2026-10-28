@@ -1,0 +1,157 @@
+/* Copyright 2026 ForgeFlow S.L. (https://www.forgeflow.com)
+   License OPL-1 (https://www.odoo.com/documentation/master/legal/licenses.html).
+
+   The ForgeFlow theme for reveal.js: palette, Inter, the chrome of a slide
+   (logo, title, footer, number) and the animation steps (fragments). A slide
+   is 1920 x 1080. */
+
+@font-face { font-family: "Inter"; font-weight: 400; src: url("vendor/inter/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 500; src: url("vendor/inter/inter-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; src: url("vendor/inter/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("vendor/inter/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 800; src: url("vendor/inter/inter-latin-800-normal.woff2") format("woff2"); }
+
+:root {
+    --ff-blue: #3332a2;
+    --ff-navy: #050a34;
+    --ff-lavender: #cdd3f9;
+    --ff-tint: #f3f4fd;
+    --ff-coral: #fd6e72;
+    --ff-white: #ffffff;
+    --ff-grey: #5f637a;
+    --ff-light: #c9ccda;
+    --ff-zone-green: #c8f0de;
+    --ff-zone-yellow: #fbecb0;
+    --ff-zone-red: #fbc9cb;
+    --ff-dot-green: #08a876;
+    --ff-dot-yellow: #f2b705;
+    --ff-dot-red: #e03a3e;
+    --ff-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --r-background-color: var(--ff-white);
+    --r-main-font: "Inter", "Helvetica Neue", Arial, sans-serif;
+    --r-main-color: var(--ff-navy);
+}
+
+html, body { background: var(--ff-white); }
+
+.reveal {
+    font-family: var(--r-main-font);
+    color: var(--ff-navy);
+    font-size: 40px;
+    font-weight: 400;
+}
+
+.reveal .slides { text-align: left; }
+
+.reveal .slides > section {
+    width: 1920px;
+    height: 1080px;
+    padding: 0;
+    box-sizing: border-box;
+    background: var(--ff-white);
+    overflow: hidden;
+}
+
+.reveal h1, .reveal h2, .reveal p { margin: 0; }
+.reveal b { font-weight: 700; }
+
+/* ---------------------------------------------------------------- chrome */
+
+.reveal .ff-title {
+    position: absolute;
+    left: 96px;
+    top: 72px;
+    width: 1500px;
+    max-height: 150px;
+    font-size: 64px;
+    line-height: 1.12;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ff-blue);
+    text-transform: none;
+}
+
+.reveal .ff-title::after {
+    content: "";
+    position: absolute;
+    left: 14px;
+    bottom: -26px;
+    width: 238px;
+    height: 22px;
+    background: var(--ff-lavender);
+    z-index: -1;
+}
+
+.reveal .ff-logo {
+    position: absolute;
+    right: 42px;
+    top: 40px;
+    width: 230px;
+    margin: 0;
+}
+
+.reveal .ff-footer {
+    position: absolute;
+    right: 72px;
+    bottom: 34px;
+    display: flex;
+    align-items: center;
+    gap: 34px;
+    font-size: 20px;
+    color: #8a8fb8;
+}
+
+.reveal .ff-footer b {
+    border-left: 4px solid var(--ff-blue);
+    padding-left: 34px;
+    font-weight: 500;
+    color: var(--ff-blue);
+}
+
+.reveal .ff-dark .ff-footer { color: rgba(255, 255, 255, 0.55); }
+.reveal .ff-dark .ff-footer b { color: var(--ff-white); border-color: var(--ff-white); }
+
+/* The takeaway of a slide, under its content */
+.reveal .ff-takeaway {
+    position: absolute;
+    left: 96px;
+    width: 1700px;
+    top: 840px;
+    font-size: 40px;
+    font-weight: 700;
+    color: var(--ff-blue);
+}
+
+/* --------------------------------------------- entry of a slide's content */
+
+.reveal .slides section.present .ff-title { animation: ff-enter-left 0.7s var(--ff-ease) both; }
+.reveal .slides section.present .ff-title::after { animation: ff-grow-x 0.6s 0.25s var(--ff-ease) both; transform-origin: left; }
+
+@keyframes ff-enter-left { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: none; } }
+@keyframes ff-enter-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: none; } }
+@keyframes ff-grow-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes ff-pop { 0% { opacity: 0; transform: scale(0.6); } 70% { opacity: 1; transform: scale(1.06); } 100% { transform: scale(1); } }
+
+/* ------------------------------------------- animation steps (fragments) */
+
+.reveal .slides section .fragment { transition: all 0.6s var(--ff-ease); }
+
+.reveal .slides section .fragment.fade-up { opacity: 0; transform: translateY(36px); }
+.reveal .slides section .fragment.fade-up.visible { opacity: 1; transform: none; }
+
+.reveal .slides section .fragment.pop { opacity: 0; transform: scale(0.7); }
+.reveal .slides section .fragment.pop.visible { opacity: 1; transform: none; transition: opacity 0.4s, transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+.reveal .slides section .fragment.grow-x { opacity: 0; transform: scaleX(0); transform-origin: left center; }
+.reveal .slides section .fragment.grow-x.visible { opacity: 1; transform: none; transition: opacity 0.2s, transform 0.9s var(--ff-ease); }
+
+.reveal .slides section .fragment.slide-from-left { opacity: 0; transform: translateX(-60px); }
+.reveal .slides section .fragment.slide-from-left.visible { opacity: 1; transform: none; }
+
+/* A recording drives the deck itself: no controls, no progress bar */
+.ff-record .reveal .controls,
+.ff-record .reveal .progress { display: none !important; }
+
+/* Printed (PDF): every step shown */
+html.reveal-print .reveal .slides section .fragment { opacity: 1 !important; transform: none !important; visibility: visible !important; }
+html.reveal-print .reveal .slides section { height: 1080px !important; min-height: 1080px !important; top: 0 !important; }
