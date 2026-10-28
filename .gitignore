@@ -28,3 +28,6 @@ htmlcov/
 node_modules/
 *.orig
 *.rej
+
+# Repository tooling, tracked on master only
+tools/
