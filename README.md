@@ -218,6 +218,19 @@ are git repositories with no commits, so `git status` and `git diff` show what c
   (`invoke stop && invoke start`), and that the module exists on the checked-out branch.
   Then use *Update Apps List* or `invoke install --modules=<name>`.
 
+## Tools
+
+`tools/` holds what isn't an addon, on `master` with the rest of the tooling:
+
+| Folder | Purpose |
+|---|---|
+| `tools/forgeflow_reveal/` | ForgeFlow's reveal.js template: slide decks built from YAML (see its README) |
+| `tools/demos/<module>/` | The narrated demo video of a module: slides, recording flow and demo data (see its README) |
+
+Videos are recorded with [odoo-demo-recorder](https://gitlab.forgeflow.io/forgeflow/odoo-demo-recorder)
+and narrated offline with Kokoro (`kokoro-say`). Generated files (decks, images, audio,
+videos) aren't committed.
+
 ## Code style
 
 `ruff.toml` extends Odoo's own `../odoo/ruff.toml`: `ruff check .` / `ruff format .`.
