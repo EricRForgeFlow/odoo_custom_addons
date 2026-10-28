@@ -54,8 +54,11 @@ docker compose -f ../../../../odoo-sandbox-20/docker-compose.yml run --rm odoo \
 uv run --no-project --with pyyaml python ../../forgeflow_reveal/deck.py slides.yaml deck/
 RECORDER=../../../../odoo-demo-recorder/.venv/bin/odoo-demo
 ./reset_db.sh && $RECORDER validate --flow flow.py        # screenshots in shots/
-./reset_db.sh && $RECORDER record --flow flow.py          # out/demo.mp4
+./reset_db.sh && $RECORDER record --flow flow.py --size 1600x900   # out/demo.mp4, 16:9
 ```
+
+`--size 1600x900` records in 16:9, the shape of the slides (the recorder's default window
+is 1440x900, 16:10, which puts bands around them).
 
 Both runs send boards and approve an inspection, so reset before each. The live part
 uses a fixed shuffle of the test boards (`SEED` in `flow.py`), so the narration can say
